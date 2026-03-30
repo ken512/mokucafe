@@ -18,12 +18,16 @@
 - フォームはreact-hook-formを使用
 - コメントは日本語で記述
 - 変数名・関数名はキャメルケース（camelCase）
-- 
+- Reactコンポーネントファイル名はPascalCaseで始める
+- TypeScriptファイル名はキャメルケース（camelCase）で始める
 
 ## コマンド
 - 開発サーバー: npm run dev
 - DBマイグレーション: npm run prisma:push:dev
 - ビルド: npm run build
+
+## 規約
+
 
 
 ## MVPスコープ
@@ -43,7 +47,7 @@ mokucafe/
 │   │   │   └── matching/      # POST /api/ai/matching（AI相性マッチング）
 │   │   ├── login/             # /login
 │   │   ├── register/          # /register
-│   │   ├── posts/
+│   │   ├── posts/　　　　　　　m
 │   │   │   ├── [id]/          # /posts/:id
 │   │   │   └── new/           # /posts/new
 │   │   ├── profile/           # /profile
@@ -75,15 +79,4 @@ mokucafe/
 - Prisma MigrateはSupabaseと競合しないよう注意
 - TypeScript strict モードがオン。
 - 未使用の import は即エラーになる
-```
 
----
-
-**`.claude/commands/`（よく使う作業をコマンド化）**
-
-ハッカソンで繰り返す作業をスラッシュコマンドにしておくと時短になります。
-```
-.claude/commands/
-├── review.md        → /project:review
-├── db-migrate.md    → /project:db-migrate  
-└── deploy-check.md  → /project:deploy-check
