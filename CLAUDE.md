@@ -30,11 +30,51 @@
 募集投稿〜参加申請の流れのみ。マッチング機能は対象外。
 
 ## ディレクトリ構成
-（実際の構成を書く）
+
+```
+mokucafe/
+├── prisma/
+│   └── schema.prisma          # DBスキーマ定義
+├── public/                    # 静的ファイル（画像など）
+├── src/
+│   ├── app/                   # ルーティング層（Next.js App Router）
+│   │   ├── api/ai/
+│   │   │   ├── generate-post/ # POST /api/ai/generate-post（AI募集文生成）
+│   │   │   └── matching/      # POST /api/ai/matching（AI相性マッチング）
+│   │   ├── login/             # /login
+│   │   ├── register/          # /register
+│   │   ├── posts/
+│   │   │   ├── [id]/          # /posts/:id
+│   │   │   └── new/           # /posts/new
+│   │   ├── profile/           # /profile
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   ├── components/
+│   │   └── ui/                # 共有UIコンポーネント（Button, Modalなど）
+│   ├── config/                # アプリ全体で使う定数（タグ一覧など）
+│   ├── features/              # 機能単位のモジュール（bulletproof-react）
+│   │   ├── auth/              # 認証
+│   │   ├── posts/             # 募集投稿
+│   │   ├── applications/      # 参加申請
+│   │   └── profile/           # プロフィール
+│   │       └── (各feature内) components/ hooks/ types/
+│   ├── hooks/                 # 共有カスタムフック
+│   ├── lib/                   # 外部ライブラリ初期化（Prisma, Supabase）
+│   ├── types/                 # 共有TypeScript型定義
+│   └── utils/                 # 汎用ユーティリティ関数
+└── .claude/
+    ├── commands/              # カスタムスラッシュコマンド
+    ├── rules/                 # モジュール型の追加指示
+    ├── skills/                # 自律起動ワークフロー
+    └── agents/                # 専門分業エージェント
+```
 
 ## 注意事項
 - APIキーはサーバーサイドのみで呼び出す
 - Prisma MigrateはSupabaseと競合しないよう注意
+- TypeScript strict モードがオン。
+- 未使用の import は即エラーになる
 ```
 
 ---
