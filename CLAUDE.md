@@ -1,7 +1,8 @@
 @AGENTS.md
-@.claude/rules/git-rules.md
-@.claude/rules/review-checklist.md
-@.claude/skills/pr-workflow.md
+@.claude/agents/code-reviewer.md
+@.claude/agents/security-auditor.md
+@.claude/commands/review.md
+@.claude/pr-workflow/SKILL.md
 
 # もくカフェ
 
@@ -15,16 +16,6 @@
 - Gemini API（Gemini 2.5 Flash）
 - Google Places API
 
-## コーディングルール
-- コンポーネントは関数コンポーネント（アロー関数）で統一
-- any型の使用禁止
-- 単一原則に沿って、コンポーネントを作成
-- フォームはreact-hook-formを使用
-- コメントは日本語で記述
-- 変数名・関数名はキャメルケース（camelCase）
-- Reactコンポーネントファイル名はPascalCaseで始める
-- TypeScriptファイル名はキャメルケース（camelCase）で始める
-
 ## コマンド
 - 開発サーバー: npm run dev
 - DBマイグレーション: npm run prisma:push:dev
@@ -32,6 +23,77 @@
 
 ## 規約
 
+### 設計スキル
+
+設計作業はスキルを使って対話形式で進める。
+スキルファイルは `.claude/skills/` に配置されている。
+
+| 作業     | トリガーワード        | スキルファイル                             |
+| -------- | ------------------- | ---------------------------------------- |
+| 要件定義 | 「要件定義をしたい」  | .claude/skills/requirements-definer.md  |
+| DB設計   | 「DB設計をしたい」   | .claude/skills/db-designer.md           |
+| 画面設計 | 「画面設計をしたい」 | .claude/skills/screen-designer.md       |
+
+- 対話は1〜2問ずつ進める。一度に大量の質問をしない
+- 確認が完了してからMarkdownの設計書を出力する
+- 出力された設計書は `docs/` ディレクトリに保存する
+
+### MCPサーバー
+
+詳細ルールは `.claude/rules/mcp.md` を参照。
+
+- **Supabase MCP**：DBの参照・確認に使う。本番データの直接変更は禁止
+- **Context7 MCP**：Next.js / Prisma / Supabase 実装時は必ず最新ドキュメントを取得してから回答する
+
+
+### MCP サーバー
+
+#### Supabase MCP
+
+Claude は Supabase MCP を通じてデータベースに直接アクセスできる。
+
+**許可する操作**
+
+- テーブル構造・スキーマの参照
+- レコードの読み取り（SELECT）
+- マイグレーション前後のデータ確認
+- ログ・エラーの確認
+
+**禁止する操作**
+
+- 本番データの直接更新・削除（UPDATE / DELETE / DROP）
+- スキーマの直接変更（必ず Prisma マイグレーション経由で行う）
+- 他プロジェクトへのアクセス（本アプリのプロジェクトのみ）
+
+**使用例**
+```
+「postsテーブルのレコード数を確認して」
+「マイグレーション後にデータが壊れていないか確認して」
+「applicationsテーブルの構造を見せて」
+```
+
+---
+
+#### Context7 MCP
+
+ライブラリの最新ドキュメントを取得するために使用する。
+
+**使用するタイミング**
+
+- Next.js / Prisma / Supabase の実装時は必ず最新ドキュメントを取得してから回答する
+- react-hook-form の API を参照するとき
+- バージョンアップ後の変更点が不明なとき
+
+**使用しないタイミング**
+
+- プロジェクト固有の実装（ドキュメントに存在しない）
+- 単純なTypeScript / JavaScript の質問
+
+**使用例**
+```
+「Prisma の最新の upsert の書き方を調べてから実装して」
+「Supabase Auth の最新ドキュメントを参照して実装して」
+```
 
 
 ## MVPスコープ
@@ -124,29 +186,16 @@ mokucafe/
 ## エビデンス
 （動作確認内容、テスト結果など）
 
----
-
-### 例
-
----
 ## 作業目的
 ログイン時のバリデーション漏れを修正するため
 
-## 変更内容
-| # | ファイル | 変更内容 | コミットID |
-|---|---------|---------|-----------|
-| 1 | `src/auth/login.ts` | メールアドレスの形式チェックを追加 | [abc1234](https://github.com/ken512/mokucafe/commit/abc1234) |
-| 2 | `src/auth/validation.ts` | validateEmail関数を新規追加 | [def5678](https://github.com/ken512/mokucafe/commit/def5678) |
 
 ## エビデンス
 - 不正なメールアドレスでログイン試行 → エラー表示を確認
 - 正常なメールアドレスでログイン → 成功を確認
-
----
 
 ## 注意事項
 - APIキーはサーバーサイドのみで呼び出す
 - Prisma MigrateはSupabaseと競合しないよう注意
 - TypeScript strict モードがオン。
 - 未使用の import は即エラーになる
-
