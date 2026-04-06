@@ -18,6 +18,7 @@ allowed-tools: Bash, Read, Write, Agent
 ## Step1. ステージング〜コミット
 
 !`git status`
+
 !`git diff`
 !`git add .`
 

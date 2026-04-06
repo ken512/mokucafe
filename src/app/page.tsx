@@ -1,6 +1,4 @@
-
-
 const Home = () => {
-  return
-}
+  return <div>もくカフェ</div>;
+};
 export default Home;
