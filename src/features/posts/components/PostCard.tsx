@@ -7,7 +7,7 @@ type Props = {
 }
 
 const PostCard = ({ post }: Props) => {
-  const remainingSlots = post.maxParticipants - post.currentParticipants
+  const remainingSlots = Math.max(0, post.maxParticipants - post.currentParticipants)
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -69,7 +69,7 @@ const PostCard = ({ post }: Props) => {
         {/* 投稿者 */}
         <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
           <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-900 text-xs font-bold flex items-center justify-center">
-            {post.hostName[0]}
+            {post.hostName?.[0] ?? "?"}
           </div>
           <span className="text-sm text-stone-600">{post.hostName}</span>
         </div>

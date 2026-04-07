@@ -26,8 +26,8 @@ const Home = () => {
       </div>
 
       <main className="flex flex-col">
-        {/* ヒーローセクション：カフェ写真 + 濃いオーバーレイ */}
-        <section className="relative overflow-hidden">
+        {/* ヒーローセクション：カフェ写真 + 濃いオーバーレイ（min-h でfill画像の高さを保証） */}
+        <section className="relative overflow-hidden min-h-64">
           {/* 背景写真 */}
           <Image
             src={HERO_IMAGE_URL}
