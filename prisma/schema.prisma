@@ -3,7 +3,71 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+}
+
+// Supabase Auth と紐づくユーザープロフィール
+model User {
+  id             Int           @id @default(autoincrement())
+  supabaseUserId String        @unique // Supabase Auth の UUID
+  name           String
+  avatarUrl      String?
+  bio            String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  posts        Post[]
+  applications Application[]
+
+  @@map("users")
+}
+
+// カフェでの作業募集投稿
+model Post {
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  cafeName     String        // カフェ名
+  cafeAddress  String?       // カフェの住所
+  date         DateTime      // 作業予定日時
+  capacity     Int           // 募集人数
+  description  String        // 募集内容・説明
+  tags         String[]      // 雰囲気タグ（例：["静かに作業", "会話OK"]）
+  status       PostStatus    @default(OPEN)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("posts")
+}
+
+// 募集への参加申請
+model Application {
+  id        Int               @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  message   String?           // 申請メッセージ（任意）
+  status    ApplicationStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  post      Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 同じユーザーが同じ募集に二重申請できないようにする
+  @@unique([postId, userId])
+  @@map("applications")
+}
+
+enum PostStatus {
+  OPEN    // 募集中
+  CLOSED  // 締め切り
+  DONE    // 終了
+}
+
+enum ApplicationStatus {
+  PENDING   // 申請中
+  APPROVED  // 承認済み
+  REJECTED  // 却下
 }
