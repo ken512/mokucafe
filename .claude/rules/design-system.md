@@ -62,6 +62,31 @@ paths:
 <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
 ```
 
+## URLルール
+
+| 画面 | 正しいURL | NG |
+|------|-----------|-----|
+| 新規登録 | `/signup` | `/register` |
+| ログイン | `/login` | — |
+| 募集投稿 | `/posts/new` | — |
+| 募集詳細 | `/posts/[id]` | — |
+| プロフィール | `/profile` | — |
+
+> **NG**: `/register` は使わない。新規登録は必ず `/signup` で統一する。
+
+## 戻るリンクのパターン
+
+認証ページ（`/login` / `/signup`）など、メインナビ外のページには「☕ ← もどる」ピル型リンクを使う。
+
+```tsx
+<Link
+  href="/"
+  className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-full transition-colors"
+>
+  ☕ ← もどる
+</Link>
+```
+
 ## Unsplash 写真の選び方
 
 - カフェ内装・コーヒーカップ・作業風景など「温かみのある」写真を選ぶ
