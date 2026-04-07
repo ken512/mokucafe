@@ -8,6 +8,7 @@ import { LoginFormValues } from "../types"
 // ログイン処理hook
 export const useLogin = () => {
   const router = useRouter()
+  const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -15,17 +16,19 @@ export const useLogin = () => {
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (authError) {
-      setError("メールアドレスまたはパスワードが正しくありません")
+      if (authError) {
+        setError("メールアドレスまたはパスワードが正しくありません")
+        return
+      }
+
+      router.push("/")
+      router.refresh()
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    router.push("/")
-    router.refresh()
   }
 
   return { login, isLoading, error }

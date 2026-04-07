@@ -24,8 +24,9 @@ const LoginForm = () => {
 
       {/* メールアドレス */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">メールアドレス</label>
+        <label htmlFor="email" className="text-sm font-medium text-stone-700">メールアドレス</label>
         <input
+          id="email"
           type="email"
           placeholder="example@email.com"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -44,8 +45,9 @@ const LoginForm = () => {
 
       {/* パスワード */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">パスワード</label>
+        <label htmlFor="password" className="text-sm font-medium text-stone-700">パスワード</label>
         <input
+          id="password"
           type="password"
           placeholder="••••••••"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -66,7 +68,7 @@ const LoginForm = () => {
       <button
         type="submit"
         disabled={isLoading}
-        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 text-white font-semibold py-3 rounded-full transition-colors text-sm"
+        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full transition-colors text-sm"
       >
         {isLoading ? "ログイン中..." : "ログインする"}
       </button>
