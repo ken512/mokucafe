@@ -7,8 +7,11 @@ const LoginPage = () => {
       {/* ヘッダー */}
       <header className="bg-white border-b border-stone-200">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
-          <Link href="/" className="text-base font-bold text-stone-800">
-            ☕ もくカフェ
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-full transition-colors"
+          >
+            ☕ ← もどる
           </Link>
         </div>
       </header>
