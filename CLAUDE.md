@@ -3,6 +3,7 @@
 @.claude/agents/security-auditor.md
 @.claude/commands/review.md
 @.claude/pr-workflow/SKILL.md
+@.claude/rules/design-system.md
 
 # もくカフェ
 
