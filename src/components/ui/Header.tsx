@@ -11,7 +11,7 @@ const Header = () => {
 
       <div className="flex items-center gap-2">
 <Link
-          href="/register"
+          href="/signup"
           className="text-sm border border-amber-900 text-amber-900 hover:bg-amber-50 font-medium px-4 py-1.5 rounded-full transition-colors"
         >
           新規登録
