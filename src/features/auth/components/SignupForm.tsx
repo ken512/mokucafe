@@ -10,12 +10,9 @@ const SignupForm = () => {
   const {
     register,
     handleSubmit,
-    watch,
+    getValues,
     formState: { errors },
   } = useForm<SignupFormValues>()
-
-  // パスワード確認のバリデーション用
-  const password = watch("password")
 
   return (
     <form onSubmit={handleSubmit(signup)} className="flex flex-col gap-5">
@@ -96,7 +93,7 @@ const SignupForm = () => {
           {...register("confirmPassword", {
             required: "パスワードを再入力してください",
             validate: (value) =>
-              value === password || "パスワードが一致しません",
+              value === getValues("password") || "パスワードが一致しません",
           })}
         />
         {errors.confirmPassword && (
