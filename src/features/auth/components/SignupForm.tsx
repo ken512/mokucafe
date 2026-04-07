@@ -11,6 +11,7 @@ const SignupForm = () => {
     register,
     handleSubmit,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<SignupFormValues>()
 
@@ -25,8 +26,9 @@ const SignupForm = () => {
 
       {/* 表示名 */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">表示名</label>
+        <label htmlFor="displayName" className="text-sm font-medium text-stone-700">表示名</label>
         <input
+          id="displayName"
           type="text"
           placeholder="田中 りな"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -45,8 +47,9 @@ const SignupForm = () => {
 
       {/* メールアドレス */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">メールアドレス</label>
+        <label htmlFor="email" className="text-sm font-medium text-stone-700">メールアドレス</label>
         <input
+          id="email"
           type="email"
           placeholder="example@email.com"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -63,10 +66,11 @@ const SignupForm = () => {
         )}
       </div>
 
-      {/* パスワード */}
+      {/* パスワード：変更時にconfirmPasswordを再バリデート */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">パスワード</label>
+        <label htmlFor="password" className="text-sm font-medium text-stone-700">パスワード</label>
         <input
+          id="password"
           type="password"
           placeholder="••••••••"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -76,6 +80,7 @@ const SignupForm = () => {
               value: 6,
               message: "パスワードは6文字以上で入力してください",
             },
+            onChange: () => trigger("confirmPassword"),
           })}
         />
         {errors.password && (
@@ -85,8 +90,9 @@ const SignupForm = () => {
 
       {/* パスワード確認 */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-stone-700">パスワード（確認）</label>
+        <label htmlFor="confirmPassword" className="text-sm font-medium text-stone-700">パスワード（確認）</label>
         <input
+          id="confirmPassword"
           type="password"
           placeholder="••••••••"
           className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
@@ -105,7 +111,7 @@ const SignupForm = () => {
       <button
         type="submit"
         disabled={isLoading}
-        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 text-white font-semibold py-3 rounded-full transition-colors text-sm"
+        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full transition-colors text-sm"
       >
         {isLoading ? "登録中..." : "アカウントを作成する"}
       </button>
