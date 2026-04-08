@@ -33,13 +33,14 @@ export const middleware = async (request: NextRequest) => {
   // セッションを更新（必須：削除しないこと）
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 未ログインユーザーが投稿作成・プロフィールページにアクセスした場合はログインへ
+  // 未ログイン・ゲストユーザーが投稿作成・プロフィールページにアクセスした場合はログインへ
   const protectedPaths = ["/posts/new", "/profile"]
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
 
-  if (!user && isProtected) {
+  const isAnonymous = user?.is_anonymous === true
+  if ((!user || isAnonymous) && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)

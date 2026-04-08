@@ -35,7 +35,8 @@ const Dialog = ({
   variant = "info",
   closeLabel = "OK",
 }: Props) => {
-  if (!isOpen) return null
+  // SSR時はdocumentが存在しないためレンダリングしない
+  if (!isOpen || typeof window === "undefined") return null
 
   return createPortal(
     <div
