@@ -113,7 +113,7 @@ mokucafe/
 │   │   │   ├── generate-post/ # POST /api/ai/generate-post（AI募集文生成）
 │   │   │   └── matching/      # POST /api/ai/matching（AI相性マッチング）
 │   │   ├── login/             # /login
-│   │   ├── register/          # /register
+│   │   ├
 │   │   ├── posts/　　　　　　　m
 │   │   │   ├── [id]/          # /posts/:id
 │   │   │   └── new/           # /posts/new

@@ -18,7 +18,7 @@ triggers:
 - 認証：Supabase Auth
 - フォーム：react-hook-form
 - MVPスコープ：募集投稿〜参加申請（マッチングは対象外）
-- 既存ルート：/login / /register / /posts / /posts/[id] / /posts/new / /profile
+- 既存ルート：/login / /signup / /posts / /posts/[id] / /posts/new / /profile
 
 ## ディレクトリ対応ルール
 
