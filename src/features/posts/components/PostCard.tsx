@@ -1,6 +1,8 @@
-import Link from "next/link"
 import Image from "next/image"
 import { Post } from "../types"
+import Tag from "@/components/ui/Tag"
+import Avatar from "@/components/ui/Avatar"
+import ButtonLink from "@/components/ui/ButtonLink"
 
 type Props = {
   post: Post
@@ -40,37 +42,25 @@ const PostCard = ({ post }: Props) => {
           <h2 className="text-base font-bold text-stone-800 mt-0.5">{post.cafeName}</h2>
         </div>
 
-        {/* 説明文：stone-800 で視認性を確保 */}
         <p className="text-sm text-stone-800 leading-relaxed line-clamp-2">
           {post.description}
         </p>
 
-        {/* タグ＋ボタン */}
+        {/* タグ＋詳細ボタン */}
         <div className="flex items-center justify-between mt-1">
           <div className="flex gap-1.5 flex-wrap">
             {post.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="text-xs bg-amber-50 text-amber-900 border border-amber-200 rounded-full px-2.5 py-0.5"
-              >
-                {tag}
-              </span>
+              <Tag key={tag} label={tag} />
             ))}
           </div>
-
-          <Link
-            href={`/posts/${post.id}`}
-            className="text-xs bg-amber-900 hover:bg-amber-800 text-white font-medium px-4 py-1.5 rounded-full transition-colors shrink-0 ml-2"
-          >
+          <ButtonLink href={`/posts/${post.id}`} variant="primary" size="sm" className="shrink-0 ml-2">
             詳細を見る
-          </Link>
+          </ButtonLink>
         </div>
 
         {/* 投稿者 */}
         <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
-          <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-900 text-xs font-bold flex items-center justify-center">
-            {post.hostName?.[0] ?? "?"}
-          </div>
+          <Avatar name={post.hostName} />
           <span className="text-sm text-stone-600">{post.hostName}</span>
         </div>
       </div>

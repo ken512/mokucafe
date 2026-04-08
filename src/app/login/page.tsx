@@ -1,5 +1,6 @@
 import Link from "next/link"
 import LoginForm from "@/features/auth/components/LoginForm"
+import GuestLoginButton from "@/features/auth/components/GuestLoginButton"
 
 const LoginPage = () => {
   return (
@@ -26,6 +27,7 @@ const LoginPage = () => {
           </div>
 
           <LoginForm />
+          <GuestLoginButton />
         </div>
       </main>
     </div>
