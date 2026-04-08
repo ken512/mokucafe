@@ -4,9 +4,13 @@ import { useForm } from "react-hook-form"
 import Link from "next/link"
 import { useSignup } from "../hooks/useSignup"
 import { SignupFormValues } from "../types"
+import Button from "@/components/ui/Button"
+import FormField from "@/components/ui/FormField"
+import ErrorAlert from "@/components/ui/ErrorAlert"
+import Dialog from "@/components/ui/Dialog"
 
 const SignupForm = () => {
-  const { signup, isLoading, error } = useSignup()
+  const { signup, isLoading, error, dialog, isOpen, closeDialog } = useSignup()
   const {
     register,
     handleSubmit,
@@ -16,22 +20,16 @@ const SignupForm = () => {
   } = useForm<SignupFormValues>()
 
   return (
-    <form onSubmit={handleSubmit(signup)} className="flex flex-col gap-5">
-      {/* サーバーエラー */}
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-          {error}
-        </p>
-      )}
+    <>
+      <form onSubmit={handleSubmit(signup)} className="flex flex-col gap-5">
+        {error && <ErrorAlert message={error} />}
 
-      {/* 表示名 */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="displayName" className="text-sm font-medium text-stone-700">表示名</label>
-        <input
-          id="displayName"
+        <FormField
+          label="表示名"
+          htmlFor="displayName"
           type="text"
           placeholder="田中 りな"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.displayName?.message}
           {...register("displayName", {
             required: "表示名を入力してください",
             maxLength: {
@@ -40,19 +38,13 @@ const SignupForm = () => {
             },
           })}
         />
-        {errors.displayName && (
-          <p className="text-xs text-red-500">{errors.displayName.message}</p>
-        )}
-      </div>
 
-      {/* メールアドレス */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-stone-700">メールアドレス</label>
-        <input
-          id="email"
+        <FormField
+          label="メールアドレス"
+          htmlFor="email"
           type="email"
           placeholder="example@email.com"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.email?.message}
           {...register("email", {
             required: "メールアドレスを入力してください",
             pattern: {
@@ -61,19 +53,14 @@ const SignupForm = () => {
             },
           })}
         />
-        {errors.email && (
-          <p className="text-xs text-red-500">{errors.email.message}</p>
-        )}
-      </div>
 
-      {/* パスワード：変更時にconfirmPasswordを再バリデート */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-stone-700">パスワード</label>
-        <input
-          id="password"
+        {/* パスワード：変更時にconfirmPasswordを再バリデート */}
+        <FormField
+          label="パスワード"
+          htmlFor="password"
           type="password"
           placeholder="••••••••"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.password?.message}
           {...register("password", {
             required: "パスワードを入力してください",
             minLength: {
@@ -83,47 +70,42 @@ const SignupForm = () => {
             onChange: () => trigger("confirmPassword"),
           })}
         />
-        {errors.password && (
-          <p className="text-xs text-red-500">{errors.password.message}</p>
-        )}
-      </div>
 
-      {/* パスワード確認 */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="confirmPassword" className="text-sm font-medium text-stone-700">パスワード（確認）</label>
-        <input
-          id="confirmPassword"
+        <FormField
+          label="パスワード（確認）"
+          htmlFor="confirmPassword"
           type="password"
           placeholder="••••••••"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.confirmPassword?.message}
           {...register("confirmPassword", {
             required: "パスワードを再入力してください",
             validate: (value) =>
               value === getValues("password") || "パスワードが一致しません",
           })}
         />
-        {errors.confirmPassword && (
-          <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
-        )}
-      </div>
 
-      {/* 登録ボタン */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full transition-colors text-sm"
-      >
-        {isLoading ? "登録中..." : "アカウントを作成する"}
-      </button>
+        <Button type="submit" fullWidth size="lg" isLoading={isLoading} loadingText="登録中...">
+          アカウントを作成する
+        </Button>
 
-      {/* ログインへ */}
-      <p className="text-center text-sm text-stone-500">
-        すでにアカウントをお持ちの方は{" "}
-        <Link href="/login" className="text-amber-900 font-medium hover:underline">
-          ログイン
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-stone-500">
+          すでにアカウントをお持ちの方は{" "}
+          <Link href="/login" className="text-amber-900 font-medium hover:underline">
+            ログイン
+          </Link>
+        </p>
+      </form>
+
+      {dialog && (
+        <Dialog
+          isOpen={isOpen}
+          onClose={closeDialog}
+          title={dialog.title}
+          message={dialog.message}
+          variant={dialog.variant}
+        />
+      )}
+    </>
   )
 }
 

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useDialog } from "@/hooks/useDialog"
 import { SignupFormValues } from "../types"
 
 // サインアップ処理hook
@@ -11,13 +12,14 @@ export const useSignup = () => {
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { dialog, isOpen, showDialog, closeDialog } = useDialog()
 
   const signup = async ({ email, password, displayName }: SignupFormValues) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -26,21 +28,39 @@ export const useSignup = () => {
       })
 
       if (authError) {
-        // すでに登録済みのメールアドレスの場合
         if (authError.message.includes("already registered")) {
           setError("このメールアドレスはすでに登録されています")
+        } else if (authError.message.includes("rate limit")) {
+          setError("しばらく時間をおいてから再度お試しください（メール送信の上限に達しました）")
         } else {
           setError("登録に失敗しました。しばらく時間をおいて再度お試しください")
         }
         return
       }
 
-      router.push("/")
-      router.refresh()
+      if (data.session) {
+        // メール確認不要の設定の場合：即ログインしてホームへ
+        showDialog({
+          title: "登録完了！",
+          message: "アカウントを作成しました ☕\nもくカフェへようこそ！",
+          variant: "success",
+          onClose: () => {
+            router.push("/")
+            router.refresh()
+          },
+        })
+      } else {
+        // メール確認が必要な場合：確認メール案内
+        showDialog({
+          title: "確認メールを送りました！",
+          message: `${email} に確認メールを送信しました。\nメール内のリンクをクリックして登録を完了してください。`,
+          variant: "info",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  return { signup, isLoading, error }
+  return { signup, isLoading, error, dialog, isOpen, closeDialog }
 }

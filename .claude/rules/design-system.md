@@ -40,6 +40,85 @@ paths:
   - ヒーロー: `bg-amber-950/85`
   - カード写真: `bg-black/30`
 
+## 汎用UIコンポーネント
+
+`src/components/ui/` に汎用コンポーネントが揃っている。**独自の className でボタンや入力欄を書かず、必ずこれらを使うこと。**
+
+### Button `src/components/ui/Button.tsx`
+
+```tsx
+// variant: "primary"（デフォルト）| "outline" | "ghost" | "hero"
+// size: "sm" | "md"（デフォルト）| "lg"
+<Button variant="primary" size="lg" fullWidth isLoading={isLoading} loadingText="送信中...">
+  送信する
+</Button>
+```
+
+| variant | 用途 |
+|---------|------|
+| `primary` | メインアクション（コーヒーブラウン） |
+| `outline` | サブアクション（枠線のみ） |
+| `ghost` | 控えめなアクション（stone系） |
+| `hero` | ヒーローセクション内CTA（白背景） |
+
+### ButtonLink `src/components/ui/ButtonLink.tsx`
+
+`<Link>` をボタン風に表示する。`Button` と同じ variant / size を使える。
+
+```tsx
+<ButtonLink href="/posts/new" variant="hero" size="lg">募集を投稿する</ButtonLink>
+<ButtonLink href="/signup" variant="outline" size="sm">新規登録</ButtonLink>
+```
+
+### FormField `src/components/ui/FormField.tsx`
+
+ラベル + 入力欄 + エラー文のセット。react-hook-form の `register` を直接スプレッドできる。
+
+```tsx
+<FormField
+  label="メールアドレス"
+  htmlFor="email"
+  type="email"
+  placeholder="example@email.com"
+  errorMessage={errors.email?.message}
+  {...signup("email", { required: "入力してください" })}
+/>
+```
+
+### Input `src/components/ui/Input.tsx`
+
+FormField に収まらないケースで単体利用。`error` prop でエラー状態のスタイルが変わる。
+
+```tsx
+<Input type="text" placeholder="検索..." error={!!errors.query} {...signup("query")} />
+```
+
+### Tag `src/components/ui/Tag.tsx`
+
+投稿タグ。amber系の pill スタイル。
+
+```tsx
+<Tag label="もくもく作業" />
+```
+
+### ErrorAlert `src/components/ui/ErrorAlert.tsx`
+
+サーバーエラーやフォーム全体のエラー表示。
+
+```tsx
+{error && <ErrorAlert message={error} />}
+```
+
+### Avatar `src/components/ui/Avatar.tsx`
+
+ユーザー名の頭文字を円形で表示。
+
+```tsx
+<Avatar name={post.hostName} size="sm" />  // size: "sm"（デフォルト）| "md"
+```
+
+---
+
 ## コンポーネントパターン
 
 ### ヒーローセクション

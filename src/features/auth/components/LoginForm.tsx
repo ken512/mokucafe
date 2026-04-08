@@ -4,9 +4,13 @@ import { useForm } from "react-hook-form"
 import Link from "next/link"
 import { useLogin } from "../hooks/useLogin"
 import { LoginFormValues } from "../types"
+import Button from "@/components/ui/Button"
+import FormField from "@/components/ui/FormField"
+import ErrorAlert from "@/components/ui/ErrorAlert"
+import Dialog from "@/components/ui/Dialog"
 
 const LoginForm = () => {
-  const { login, isLoading, error } = useLogin()
+  const { login, isLoading, error, dialog, isOpen, closeDialog } = useLogin()
   const {
     register,
     handleSubmit,
@@ -14,22 +18,16 @@ const LoginForm = () => {
   } = useForm<LoginFormValues>()
 
   return (
-    <form onSubmit={handleSubmit(login)} className="flex flex-col gap-5">
-      {/* サーバーエラー */}
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-          {error}
-        </p>
-      )}
+    <>
+      <form onSubmit={handleSubmit(login)} className="flex flex-col gap-5">
+        {error && <ErrorAlert message={error} />}
 
-      {/* メールアドレス */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-stone-700">メールアドレス</label>
-        <input
-          id="email"
+        <FormField
+          label="メールアドレス"
+          htmlFor="email"
           type="email"
           placeholder="example@email.com"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.email?.message}
           {...register("email", {
             required: "メールアドレスを入力してください",
             pattern: {
@@ -38,19 +36,13 @@ const LoginForm = () => {
             },
           })}
         />
-        {errors.email && (
-          <p className="text-xs text-red-500">{errors.email.message}</p>
-        )}
-      </div>
 
-      {/* パスワード */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-stone-700">パスワード</label>
-        <input
-          id="password"
+        <FormField
+          label="パスワード"
+          htmlFor="password"
           type="password"
           placeholder="••••••••"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900"
+          errorMessage={errors.password?.message}
           {...register("password", {
             required: "パスワードを入力してください",
             minLength: {
@@ -59,28 +51,29 @@ const LoginForm = () => {
             },
           })}
         />
-        {errors.password && (
-          <p className="text-xs text-red-500">{errors.password.message}</p>
-        )}
-      </div>
 
-      {/* ログインボタン */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-amber-900 hover:bg-amber-800 disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full transition-colors text-sm"
-      >
-        {isLoading ? "ログイン中..." : "ログインする"}
-      </button>
+        <Button type="submit" fullWidth size="lg" isLoading={isLoading} loadingText="ログイン中...">
+          ログインする
+        </Button>
 
-      {/* 新規登録へ */}
-      <p className="text-center text-sm text-stone-500">
-        アカウントをお持ちでない方は{" "}
-        <Link href="/signup" className="text-amber-900 font-medium hover:underline">
-          新規登録
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-stone-500">
+          アカウントをお持ちでない方は{" "}
+          <Link href="/signup" className="text-amber-900 font-medium hover:underline">
+            新規登録
+          </Link>
+        </p>
+      </form>
+
+      {dialog && (
+        <Dialog
+          isOpen={isOpen}
+          onClose={closeDialog}
+          title={dialog.title}
+          message={dialog.message}
+          variant={dialog.variant}
+        />
+      )}
+    </>
   )
 }
 
