@@ -1,16 +1,23 @@
-// 募集投稿の型定義
+// 募集投稿の型定義（DBスキーマ準拠）
 export type Post = {
-  id: string
+  id: number
   cafeName: string
-  cafeAddress: string
-  hostName: string
-  hostAvatarUrl?: string
-  cafeImageUrl?: string  // カフェの写真URL
+  cafeAddress: string | null
+  date: string // ISO8601
+  capacity: number
   description: string
   tags: string[]
-  startTime: string // "14:00" 形式
-  endTime: string   // "17:00" 形式
-  maxParticipants: number
-  currentParticipants: number
+  status: "OPEN" | "CLOSED" | "DONE"
   createdAt: string
+  host: {
+    name: string
+    avatarUrl: string | null
+  }
+  applicantCount: number
+}
+
+// GET /api/posts のレスポンス型
+export type PostsResponse = {
+  posts: Post[]
+  nextCursor: number | null
 }
