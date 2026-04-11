@@ -5,8 +5,10 @@ import { useForm } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
+import CafeAutocompleteInput from "./CafeAutocompleteInput"
 import { useCreatePost } from "../hooks/useCreatePost"
 import { CreatePostRequest } from "../types"
+import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
 // react-hook-form 用のフォーム値型（date・capacity は変換が必要なため string で受け取る）
 type FormValues = Omit<CreatePostRequest, "capacity" | "tags"> & {
@@ -22,8 +24,15 @@ const CreatePostForm = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>()
+
+  // Places Autocomplete で候補を選択したとき、カフェ名と住所を自動入力する
+  const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
+    setValue("cafeName", suggestion.name, { shouldValidate: true })
+    setValue("cafeAddress", suggestion.address, { shouldValidate: true })
+  }
 
   // Enterキーでタグを追加する（フォーム送信は防ぐ）
   const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -59,20 +68,21 @@ const CreatePostForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {error && <ErrorAlert message={error} />}
 
-        {/* カフェ名 */}
-        <FormField
-          label="カフェ名"
-          htmlFor="cafeName"
-          placeholder="例：スターバックス 渋谷店"
-          errorMessage={errors.cafeName?.message}
-          {...register("cafeName", { required: "カフェ名を入力してください" })}
-        />
+        {/* カフェ名（Places Autocomplete付き） */}
+        <div className="flex flex-col gap-1.5">
+          <CafeAutocompleteInput onSelect={handlePlaceSelect} />
+          {/* react-hook-form のバリデーション用に hidden input を用意する */}
+          <input type="hidden" {...register("cafeName", { required: "カフェ名を入力してください" })} />
+          {errors.cafeName && (
+            <p className="text-xs text-red-500">{errors.cafeName.message}</p>
+          )}
+        </div>
 
-        {/* カフェ住所（任意） */}
+        {/* カフェ住所（Autocomplete で自動入力・手動入力も可） */}
         <FormField
           label="住所（任意）"
           htmlFor="cafeAddress"
-          placeholder="例：渋谷区道玄坂2-24-1"
+          placeholder="カフェ名を選択すると自動入力されます"
           errorMessage={errors.cafeAddress?.message}
           {...register("cafeAddress")}
         />
