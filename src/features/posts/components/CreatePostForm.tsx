@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
-import Dialog from "@/components/ui/Dialog"
 import { useCreatePost } from "../hooks/useCreatePost"
 import { CreatePostRequest } from "../types"
 
@@ -16,7 +15,7 @@ type FormValues = Omit<CreatePostRequest, "capacity" | "tags"> & {
 
 // 募集投稿フォームコンポーネント
 const CreatePostForm = () => {
-  const { createPost, isLoading, error, dialog, isOpen, closeDialog } = useCreatePost()
+  const { createPost, isLoading, error } = useCreatePost()
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
 
@@ -189,16 +188,6 @@ const CreatePostForm = () => {
           募集を投稿する
         </Button>
       </form>
-
-      {dialog && (
-        <Dialog
-          isOpen={isOpen}
-          onClose={closeDialog}
-          title={dialog.title}
-          message={dialog.message}
-          variant={dialog.variant}
-        />
-      )}
     </>
   )
 }

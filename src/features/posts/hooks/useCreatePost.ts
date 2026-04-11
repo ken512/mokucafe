@@ -3,8 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useDialog } from "@/hooks/useDialog"
-import { CreatePostRequest } from "../types"
+import { CreatePostRequest, CreatePostResponse } from "../types"
 
 // 募集投稿作成 hook
 export const useCreatePost = () => {
@@ -12,7 +11,6 @@ export const useCreatePost = () => {
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { dialog, isOpen, showDialog, closeDialog } = useDialog()
 
   const createPost = async (values: CreatePostRequest) => {
     setIsLoading(true)
@@ -41,15 +39,9 @@ export const useCreatePost = () => {
         return
       }
 
-      showDialog({
-        title: "募集を投稿しました！",
-        message: "作業仲間が見つかるといいですね ☕\nホームから確認できます。",
-        variant: "success",
-        onClose: () => {
-          router.push("/")
-          router.refresh()
-        },
-      })
+      const data: CreatePostResponse = await res.json()
+      // 投稿詳細ページへ遷移（シェア機能はそちらで提供する）
+      router.push(`/posts/${data.post.id}`)
     } catch {
       setError("通信エラーが発生しました。時間をおいて再度お試しください")
     } finally {
@@ -57,5 +49,5 @@ export const useCreatePost = () => {
     }
   }
 
-  return { createPost, isLoading, error, dialog, isOpen, closeDialog }
+  return { createPost, isLoading, error }
 }
