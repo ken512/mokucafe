@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
 type Location = { lat: number; lng: number }
 
-export const usePlacesAutocomplete = () => {
-  const [input, setInput] = useState("")
+// input は外部（react-hook-form の Controller）から渡す
+export const usePlacesAutocomplete = (input: string) => {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLocating, setIsLocating] = useState(false)
@@ -14,7 +14,7 @@ export const usePlacesAutocomplete = () => {
   const [isOpen, setIsOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 入力が変わるたびに300msデバウンスで候補を取得する
+  // input が変わるたびに 300ms デバウンスで候補を取得する
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -46,7 +46,7 @@ export const usePlacesAutocomplete = () => {
   }, [input, location])
 
   // ブラウザの位置情報を取得する
-  const locateMe = () => {
+  const locateMe = useCallback(() => {
     if (!navigator.geolocation) return
     setIsLocating(true)
     navigator.geolocation.getCurrentPosition(
@@ -58,13 +58,11 @@ export const usePlacesAutocomplete = () => {
         setIsLocating(false)
       }
     )
-  }
+  }, [])
 
-  const closeSuggestions = () => setIsOpen(false)
+  const closeSuggestions = useCallback(() => setIsOpen(false), [])
 
   return {
-    input,
-    setInput,
     suggestions,
     isLoading,
     isLocating,

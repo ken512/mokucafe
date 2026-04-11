@@ -5,14 +5,16 @@ import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 import { usePlacesAutocomplete } from "../hooks/usePlacesAutocomplete"
 
 type Props = {
+  // react-hook-form の Controller から渡される
+  value: string
+  onChange: (value: string) => void
   onSelect: (suggestion: PlaceSuggestion) => void
+  error?: boolean
 }
 
 // カフェ名入力 + Places Autocomplete ドロップダウン
-const CafeAutocompleteInput = ({ onSelect }: Props) => {
+const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
   const {
-    input,
-    setInput,
     suggestions,
     isLoading,
     isLocating,
@@ -20,7 +22,7 @@ const CafeAutocompleteInput = ({ onSelect }: Props) => {
     isOpen,
     locateMe,
     closeSuggestions,
-  } = usePlacesAutocomplete()
+  } = usePlacesAutocomplete(value)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -36,7 +38,9 @@ const CafeAutocompleteInput = ({ onSelect }: Props) => {
   }, [closeSuggestions])
 
   const handleSelect = (suggestion: PlaceSuggestion) => {
-    setInput(suggestion.name)
+    // react-hook-form の cafeName を更新する
+    onChange(suggestion.name)
+    // cafeAddress など他のフィールドの更新は親に委譲する
     onSelect(suggestion)
     closeSuggestions()
   }
@@ -65,16 +69,21 @@ const CafeAutocompleteInput = ({ onSelect }: Props) => {
         </button>
       </div>
 
-      {/* 入力欄 */}
+      {/* 入力欄（react-hook-form の value/onChange と接続済み） */}
       <div className="relative">
         <input
           id="cafeName"
           type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           placeholder="例：スターバックス 渋谷店"
           autoComplete="off"
-          className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900 transition-colors w-full"
+          className={[
+            "border rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300",
+            "focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900",
+            "transition-colors w-full",
+            error ? "border-red-300 focus:ring-red-300/30 focus:border-red-400" : "border-stone-200",
+          ].join(" ")}
         />
         {isLoading && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">

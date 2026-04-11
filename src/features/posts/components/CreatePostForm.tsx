@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, KeyboardEvent } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
@@ -25,12 +25,13 @@ const CreatePostForm = () => {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<FormValues>()
 
-  // Places Autocomplete で候補を選択したとき、カフェ名と住所を自動入力する
+  // Places Autocomplete で候補を選択したとき、住所フィールドを自動入力する
+  // cafeName は Controller 経由で onChange が呼ばれるため setValue 不要
   const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
-    setValue("cafeName", suggestion.name, { shouldValidate: true })
     setValue("cafeAddress", suggestion.address, { shouldValidate: true })
   }
 
@@ -68,11 +69,22 @@ const CreatePostForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {error && <ErrorAlert message={error} />}
 
-        {/* カフェ名（Places Autocomplete付き） */}
+        {/* カフェ名（Controller で react-hook-form と接続） */}
         <div className="flex flex-col gap-1.5">
-          <CafeAutocompleteInput onSelect={handlePlaceSelect} />
-          {/* react-hook-form のバリデーション用に hidden input を用意する */}
-          <input type="hidden" {...register("cafeName", { required: "カフェ名を入力してください" })} />
+          <Controller
+            name="cafeName"
+            control={control}
+            rules={{ required: "カフェ名を入力してください" }}
+            defaultValue=""
+            render={({ field }) => (
+              <CafeAutocompleteInput
+                value={field.value}
+                onChange={field.onChange}
+                onSelect={handlePlaceSelect}
+                error={!!errors.cafeName}
+              />
+            )}
+          />
           {errors.cafeName && (
             <p className="text-xs text-red-500">{errors.cafeName.message}</p>
           )}
