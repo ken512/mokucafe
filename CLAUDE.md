@@ -4,6 +4,7 @@
 @.claude/commands/review.md
 @.claude/pr-workflow/SKILL.md
 @.claude/rules/design-system.md
+@.claude/rules/sitemap.md
 
 # もくカフェ
 
