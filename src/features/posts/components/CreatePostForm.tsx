@@ -1,22 +1,24 @@
 "use client"
 
+import { useState, KeyboardEvent } from "react"
 import { useForm } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
 import Dialog from "@/components/ui/Dialog"
-import { POST_TAGS } from "@/config/tags"
 import { useCreatePost } from "../hooks/useCreatePost"
 import { CreatePostRequest } from "../types"
 
-// react-hook-form 用のフォーム値型（date は string で受け取り ISO に変換する）
-type FormValues = Omit<CreatePostRequest, "capacity"> & {
+// react-hook-form 用のフォーム値型（date・capacity は変換が必要なため string で受け取る）
+type FormValues = Omit<CreatePostRequest, "capacity" | "tags"> & {
   capacity: string
 }
 
 // 募集投稿フォームコンポーネント
 const CreatePostForm = () => {
   const { createPost, isLoading, error, dialog, isOpen, closeDialog } = useCreatePost()
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState("")
 
   const {
     register,
@@ -24,12 +26,32 @@ const CreatePostForm = () => {
     formState: { errors },
   } = useForm<FormValues>()
 
+  // Enterキーでタグを追加する（フォーム送信は防ぐ）
+  const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return
+    e.preventDefault()
+    addTag()
+  }
+
+  const addTag = () => {
+    const trimmed = tagInput.trim()
+    // 空・重複・5個以上は追加しない
+    if (!trimmed || tags.includes(trimmed) || tags.length >= 5) return
+    setTags([...tags, trimmed])
+    setTagInput("")
+  }
+
+  const removeTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag))
+  }
+
   const onSubmit = (values: FormValues) => {
     createPost({
       ...values,
       // datetime-local の値（"2026-04-15T10:00"）を ISO8601 に変換する
       date: new Date(values.date).toISOString(),
       capacity: Number(values.capacity),
+      tags,
     })
   }
 
@@ -103,28 +125,56 @@ const CreatePostForm = () => {
           )}
         </div>
 
-        {/* タグ（複数選択） */}
+        {/* タグ（自由入力・最大5個） */}
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-stone-700">雰囲気タグ</span>
-          <div className="flex flex-wrap gap-2">
-            {POST_TAGS.map((tag) => (
-              <label
-                key={tag}
-                className="flex items-center gap-1.5 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  value={tag}
-                  className="hidden peer"
-                  {...register("tags")}
-                />
-                {/* チェック状態でアクティブスタイルを適用 */}
-                <span className="text-xs px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-900 peer-checked:bg-amber-900 peer-checked:text-white peer-checked:border-amber-900 transition-colors select-none">
+          <span className="text-sm font-medium text-stone-700">
+            タグ（任意・最大5個）
+          </span>
+
+          {/* 追加済みタグ */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-amber-900 text-white"
+                >
                   {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="ml-0.5 hover:opacity-70 transition-opacity"
+                    aria-label={`${tag}を削除`}
+                  >
+                    ✕
+                  </button>
                 </span>
-              </label>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* タグ入力欄（5個未満のときのみ表示） */}
+          {tags.length < 5 && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder="例：もくもく作業"
+                maxLength={20}
+                className="border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900 transition-colors flex-1"
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-xl transition-colors shrink-0"
+              >
+                追加
+              </button>
+            </div>
+          )}
+          <p className="text-xs text-stone-400">Enterまたは「追加」ボタンでタグを追加できます</p>
         </div>
 
         <Button
