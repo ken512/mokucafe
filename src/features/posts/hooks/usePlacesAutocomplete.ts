@@ -33,6 +33,9 @@ export const usePlacesAutocomplete = (input: string) => {
           body: JSON.stringify({ input, ...(location ?? {}) }),
         })
         const data = await res.json()
+        if (data.error) {
+          console.error("[usePlacesAutocomplete]", data.error)
+        }
         setSuggestions(data.suggestions ?? [])
         setIsOpen(true)
       } finally {
