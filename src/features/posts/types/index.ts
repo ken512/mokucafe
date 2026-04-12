@@ -6,6 +6,7 @@ export type CreatePostRequest = {
   capacity: number
   description: string
   tags: string[]
+  mediaUrls?: string[] // アップロード済みメディアの公開URL（最大3件）
 }
 
 // POST /api/posts のレスポンス型
@@ -22,6 +23,7 @@ export type Post = {
   capacity: number
   description: string
   tags: string[]
+  mediaUrls: string[] // カフェ写真・動画の公開URL（最大3件）
   status: "OPEN" | "CLOSED" | "DONE"
   createdAt: string
   host: {

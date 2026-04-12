@@ -40,6 +40,7 @@ const PostDetailPage = async ({ params }: Props) => {
     capacity: postRaw.capacity,
     description: postRaw.description,
     tags: postRaw.tags,
+    mediaUrls: postRaw.mediaUrls,
     status: postRaw.status,
     createdAt: postRaw.createdAt.toISOString(),
     host: { name: postRaw.user.name, avatarUrl: postRaw.user.avatarUrl },

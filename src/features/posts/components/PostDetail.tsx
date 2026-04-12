@@ -1,9 +1,13 @@
+import Image from "next/image"
 import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
 import CafeMap from "./CafeMap"
 import ApplyButton from "./ApplyButton"
 import { Post } from "../types"
+
+// URLが動画ファイルかどうかを判定する
+const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
 
 type Props = {
   post: Post
@@ -61,6 +65,35 @@ const PostDetail = ({ post, isLoggedIn }: Props) => {
           </div>
         )}
       </div>
+
+      {/* メディアギャラリー（写真・動画がある場合のみ表示） */}
+      {post.mediaUrls.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+          <p className="text-sm font-medium text-stone-700">カフェの写真・動画</p>
+          <div className="flex flex-wrap gap-3">
+            {post.mediaUrls.map((url, i) =>
+              isVideoUrl(url) ? (
+                <video
+                  key={i}
+                  src={url}
+                  controls
+                  className="w-full rounded-xl max-h-64 bg-black"
+                />
+              ) : (
+                <div key={i} className="relative w-full rounded-xl overflow-hidden aspect-video">
+                  <Image
+                    src={url}
+                    alt={`カフェの写真${i + 1}`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 地図（住所がある場合のみ表示） */}
       {post.cafeAddress && (

@@ -6,12 +6,13 @@ import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
 import CafeAutocompleteInput from "./CafeAutocompleteInput"
+import MediaUploader from "./MediaUploader"
 import { useCreatePost } from "../hooks/useCreatePost"
 import { CreatePostRequest } from "../types"
 import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
 // react-hook-form 用のフォーム値型（date・capacity は変換が必要なため string で受け取る）
-type FormValues = Omit<CreatePostRequest, "capacity" | "tags"> & {
+type FormValues = Omit<CreatePostRequest, "capacity" | "tags" | "mediaUrls"> & {
   capacity: string
 }
 
@@ -20,6 +21,8 @@ const CreatePostForm = () => {
   const { createPost, isLoading, error } = useCreatePost()
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
+  const [images, setImages] = useState<File[]>([])
+  const [video, setVideo] = useState<File | null>(null)
 
   const {
     register,
@@ -62,6 +65,8 @@ const CreatePostForm = () => {
       date: new Date(values.date).toISOString(),
       capacity: Number(values.capacity),
       tags,
+      images,
+      video,
     })
   }
 
@@ -198,6 +203,14 @@ const CreatePostForm = () => {
           )}
           <p className="text-xs text-stone-400">Enterまたは「追加」ボタンでタグを追加できます</p>
         </div>
+
+        {/* 写真・動画アップロード */}
+        <MediaUploader
+          images={images}
+          video={video}
+          onImagesChange={setImages}
+          onVideoChange={setVideo}
+        />
 
         <Button
           type="submit"

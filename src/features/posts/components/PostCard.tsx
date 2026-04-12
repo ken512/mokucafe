@@ -1,7 +1,11 @@
+import Image from "next/image"
 import { Post } from "../types"
 import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
+
+// URLが動画ファイルかどうかを判定する
+const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
 
 type Props = {
   post: Post
@@ -19,11 +23,24 @@ const formatDate = (isoString: string): string => {
 
 const PostCard = ({ post }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
+  // 画像URLを先頭から探す（動画は除く）
+  const thumbnailUrl = post.mediaUrls.find((url) => !isVideoUrl(url))
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* カード上部：グラデーションヘッダー */}
-      <div className="h-28 bg-linear-to-br from-amber-800 to-amber-950 relative">
+      {/* カード上部：投稿写真 or グラデーションヘッダー */}
+      <div className="h-28 relative">
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt={`${post.cafeName}の写真`}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 bg-linear-to-br from-amber-800 to-amber-950" />
+        )}
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 flex items-end justify-between p-3">
           <span className="text-white text-xs bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
