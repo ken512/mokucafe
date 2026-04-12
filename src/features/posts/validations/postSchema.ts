@@ -1,5 +1,13 @@
 import { CreatePostRequest, UpdatePostRequest } from "../types"
 
+// Supabase Storage の post-media バケットの公開 URL プレフィックス
+// 自プロジェクト以外の URL が mediaUrls に混入するのを防ぐ
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""
+const ALLOWED_MEDIA_PREFIX = `${SUPABASE_URL}/storage/v1/object/public/post-media/`
+
+const isAllowedMediaUrl = (url: string): boolean =>
+  SUPABASE_URL !== "" && url.startsWith(ALLOWED_MEDIA_PREFIX)
+
 // バリデーションエラーの型
 type ValidationError = {
   field: string
@@ -61,6 +69,8 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
       errors.push({ field: "mediaUrls", message: "メディアURLは文字列の配列で入力してください" })
     } else if (b.mediaUrls.length > 3) {
       errors.push({ field: "mediaUrls", message: "メディアは最大3件まで登録できます" })
+    } else if ((b.mediaUrls as string[]).some((u) => !isAllowedMediaUrl(u))) {
+      errors.push({ field: "mediaUrls", message: "不正なメディアURLが含まれています" })
     }
   }
 
@@ -139,6 +149,8 @@ export const validateUpdatePost = (body: unknown): UpdateValidationResult => {
       errors.push({ field: "mediaUrls", message: "メディアURLは文字列の配列で入力してください" })
     } else if (b.mediaUrls.length > 3) {
       errors.push({ field: "mediaUrls", message: "メディアは最大3件まで登録できます" })
+    } else if ((b.mediaUrls as string[]).some((u) => !isAllowedMediaUrl(u))) {
+      errors.push({ field: "mediaUrls", message: "不正なメディアURLが含まれています" })
     } else {
       data.mediaUrls = b.mediaUrls as string[]
     }

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Post, UpdatePostRequest } from "../types"
-import { compressImage, validateVideoSize } from "../utils/compressImage"
+import { compressImage, validateVideoSize, validateFileType } from "../utils/compressImage"
 
 const BUCKET = "post-media"
 
@@ -56,8 +56,13 @@ export const useUpdatePost = () => {
         return null
       }
 
-      // 動画のサイズを事前に検証する（50MB超はエラー）
-      if (newVideo) validateVideoSize(newVideo)
+      // ファイルの MIME タイプを検証する（許可形式以外はアップロードしない）
+      newImages.forEach((f) => validateFileType(f, "image"))
+      if (newVideo) {
+        validateFileType(newVideo, "video")
+        // 動画のサイズを事前に検証する（50MB超はエラー）
+        validateVideoSize(newVideo)
+      }
 
       // 画像を圧縮してからアップロードする
       const compressedImages = await Promise.all(newImages.map(compressImage))
