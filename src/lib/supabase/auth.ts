@@ -10,7 +10,7 @@ type AuthResult =
   | { success: false; message: string }
 
 // リクエストヘッダーからBearerトークンを取得する
-const extractBearerToken = (request: NextRequest): string | null => {
+export const extractBearerToken = (request: NextRequest): string | null => {
   const authHeader = request.headers.get("authorization")
   if (!authHeader?.startsWith("Bearer ")) return null
   return authHeader.replace("Bearer ", "")

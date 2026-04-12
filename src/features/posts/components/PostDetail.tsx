@@ -3,11 +3,14 @@ import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
 import CafeMap from "./CafeMap"
 import ApplyButton from "./ApplyButton"
+import MediaGallery from "./MediaGallery"
+import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
 
 type Props = {
   post: Post
   isLoggedIn: boolean
+  isOwner: boolean
 }
 
 // "2026-04-11T14:00:00Z" → "2026/4/11 14:00"
@@ -22,12 +25,18 @@ const formatDate = (isoString: string): string => {
 }
 
 // 募集投稿の詳細表示コンポーネント
-const PostDetail = ({ post, isLoggedIn }: Props) => {
+// 表示順: メディア → 募集内容 → 地図 → ホスト → 申請/削除
+const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
 
   return (
     <div className="flex flex-col gap-4">
-      {/* カフェ情報・投稿内容 */}
+      {/* 1. メディアギャラリー（写真・動画がある場合のみ表示） */}
+      {post.mediaUrls.length > 0 && (
+        <MediaGallery mediaUrls={post.mediaUrls} />
+      )}
+
+      {/* 2. カフェ情報・募集内容 */}
       <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-4">
         {/* カフェ名・住所 */}
         <div>
@@ -62,7 +71,7 @@ const PostDetail = ({ post, isLoggedIn }: Props) => {
         )}
       </div>
 
-      {/* 地図（住所がある場合のみ表示） */}
+      {/* 3. 地図（住所がある場合のみ表示） */}
       {post.cafeAddress && (
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
           <p className="text-sm font-medium text-stone-700 px-4 pt-4 pb-2">
@@ -81,15 +90,24 @@ const PostDetail = ({ post, isLoggedIn }: Props) => {
         </div>
       </div>
 
-      {/* 参加申請 */}
-      {isLoggedIn ? (
-        <ApplyButton postId={post.id} />
-      ) : (
-        <div className="flex flex-col items-center gap-2">
-          <ButtonLink href="/login" variant="primary" size="lg" fullWidth>
-            ログインして参加申請する
-          </ButtonLink>
-          <p className="text-xs text-stone-500">参加申請にはログインが必要です</p>
+      {/* 参加申請（投稿者本人には表示しない） */}
+      {!isOwner && (
+        isLoggedIn ? (
+          <ApplyButton postId={post.id} />
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <ButtonLink href="/login" variant="primary" size="lg" fullWidth>
+              ログインして参加申請する
+            </ButtonLink>
+            <p className="text-xs text-stone-500">参加申請にはログインが必要です</p>
+          </div>
+        )
+      )}
+
+      {/* 削除ボタン（投稿者本人のみ表示） */}
+      {isOwner && (
+        <div className="flex justify-center pb-2">
+          <DeletePostButton postId={post.id} />
         </div>
       )}
     </div>

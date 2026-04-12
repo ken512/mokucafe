@@ -51,6 +51,15 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
     errors.push({ field: "tags", message: "タグは文字列の配列で入力してください" })
   }
 
+  // mediaUrls（任意・最大3件）
+  if (b.mediaUrls !== undefined) {
+    if (!Array.isArray(b.mediaUrls) || b.mediaUrls.some((u) => typeof u !== "string")) {
+      errors.push({ field: "mediaUrls", message: "メディアURLは文字列の配列で入力してください" })
+    } else if (b.mediaUrls.length > 3) {
+      errors.push({ field: "mediaUrls", message: "メディアは最大3件まで登録できます" })
+    }
+  }
+
   if (errors.length > 0) return { success: false, errors }
 
   return {
@@ -62,6 +71,7 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
       capacity: b.capacity as number,
       description: (b.description as string).trim(),
       tags: b.tags as string[],
+      mediaUrls: (b.mediaUrls as string[] | undefined) ?? [],
     },
   }
 }
