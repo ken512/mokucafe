@@ -2,18 +2,20 @@ import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-// Places Autocomplete API のレスポンス型
+// Places API (New) のレスポンス型
 type PlacePrediction = {
-  place_id: string
-  structured_formatting: {
-    main_text: string
-    secondary_text: string
+  placePrediction: {
+    placeId: string
+    structuredFormat: {
+      mainText: { text: string }
+      secondaryText: { text: string }
+    }
   }
 }
 
 type GoogleAutocompleteResponse = {
-  status: string
-  predictions: PlacePrediction[]
+  suggestions?: PlacePrediction[]
+  error?: { message: string; status: string }
 }
 
 // カフェ名候補の型（フロントエンドに返す）
@@ -36,42 +38,61 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ suggestions: [] })
   }
 
-  // 現在地（任意）をクエリパラメータとして受け取る
   const lat = typeof body?.lat === "number" ? body.lat : null
   const lng = typeof body?.lng === "number" ? body.lng : null
 
-  const params = new URLSearchParams({
+  // Places API (New) のリクエストボディ
+  const requestBody: Record<string, unknown> = {
     input,
-    key: apiKey,
-    language: "ja",
-    types: "establishment",
-    components: "country:jp",
-  })
+    languageCode: "ja",
+    includedPrimaryTypes: ["establishment"],
+    regionCode: "JP",
+  }
 
   // 現在地が渡された場合は半径5km以内を優先する
   if (lat !== null && lng !== null) {
-    params.set("location", `${lat},${lng}`)
-    params.set("radius", "5000")
+    requestBody.locationBias = {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: 5000,
+      },
+    }
   }
 
   try {
     const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          // 必要なフィールドのみ取得してコストを抑える
+          "X-Goog-FieldMask": "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat",
+        },
+        body: JSON.stringify(requestBody),
+      }
     )
+
     const data: GoogleAutocompleteResponse = await res.json()
 
-    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-      return NextResponse.json({ error: "候補の取得に失敗しました" }, { status: 500 })
+    if (data.error) {
+      console.error("[Places API (New)] error:", data.error.status, data.error.message)
+      return NextResponse.json(
+        { error: `Google Places API エラー: ${data.error.status}` },
+        { status: 500 }
+      )
     }
 
-    const suggestions: PlaceSuggestion[] = data.predictions.map((p) => ({
-      placeId: p.place_id,
-      name: p.structured_formatting.main_text,
-      address: p.structured_formatting.secondary_text,
+    const suggestions: PlaceSuggestion[] = (data.suggestions ?? []).map((s) => ({
+      placeId: s.placePrediction.placeId,
+      name: s.placePrediction.structuredFormat.mainText.text,
+      address: s.placePrediction.structuredFormat.secondaryText.text,
     }))
 
     return NextResponse.json({ suggestions })
-  } catch {
+  } catch (e) {
+    console.error("[Places API (New)] fetch error:", e)
     return NextResponse.json({ error: "候補の取得に失敗しました" }, { status: 500 })
   }
 }
