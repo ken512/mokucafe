@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { CreatePostRequest, CreatePostResponse } from "../types"
+import { compressImage, validateVideoSize } from "../utils/compressImage"
 
 const BUCKET = "post-media"
 
@@ -51,8 +52,14 @@ export const useCreatePost = () => {
         return
       }
 
-      // 画像・動画をStorageにアップロードしてURLを取得する（画像→動画の順）
-      const mediaFiles = [...images, ...(video ? [video] : [])]
+      // 動画のサイズを事前に検証する（50MB超はエラー）
+      if (video) validateVideoSize(video)
+
+      // 画像を圧縮してからアップロードする（長辺1280px・JPEG品質0.82）
+      const compressedImages = await Promise.all(images.map(compressImage))
+
+      // 圧縮済み画像→動画の順でアップロードしてURLを取得する
+      const mediaFiles = [...compressedImages, ...(video ? [video] : [])]
       const mediaUrls = await Promise.all(
         mediaFiles.map((file) => uploadFile(file, session.user.id, supabase))
       )
