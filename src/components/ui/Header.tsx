@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
-import LogoutButton from "@/features/auth/components/LogoutButton"
+import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
+import UserMenu from "./UserMenu"
 
 // ヘッダー（認証状態に応じてUIを切り替えるサーバーコンポーネント）
 const Header = async () => {
@@ -9,6 +10,15 @@ const Header = async () => {
 
   const isGuest = user?.is_anonymous === true
   const isLoggedIn = !!user && !isGuest
+
+  // ログイン済みユーザーのプロフィール（アバター表示に使用）
+  let userProfile: { name: string; avatarUrl: string | null } | null = null
+  if (isLoggedIn) {
+    userProfile = await prisma.user.findUnique({
+      where: { supabaseUserId: user.id },
+      select: { name: true, avatarUrl: true },
+    })
+  }
 
   return (
     <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
@@ -37,12 +47,12 @@ const Header = async () => {
             </>
           )}
 
-          {/* ログイン済みユーザー */}
-          {isLoggedIn && (
-            <>
-              <ButtonLink href="/profile" variant="ghost" size="sm">プロフィール</ButtonLink>
-              <LogoutButton />
-            </>
+          {/* ログイン済みユーザー：アバター＋ドロップダウン */}
+          {isLoggedIn && userProfile && (
+            <UserMenu
+              name={userProfile.name}
+              avatarUrl={userProfile.avatarUrl}
+            />
           )}
         </div>
       </div>
