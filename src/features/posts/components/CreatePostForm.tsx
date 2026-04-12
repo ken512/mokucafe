@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, KeyboardEvent } from "react"
+import { useRouter } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
+import Dialog from "@/components/ui/Dialog"
 import CafeAutocompleteInput from "./CafeAutocompleteInput"
 import MediaUploader from "./MediaUploader"
 import { useCreatePost } from "../hooks/useCreatePost"
@@ -18,7 +20,8 @@ type FormValues = Omit<CreatePostRequest, "capacity" | "tags" | "mediaUrls"> & {
 
 // 募集投稿フォームコンポーネント
 const CreatePostForm = () => {
-  const { createPost, isLoading, error } = useCreatePost()
+  const router = useRouter()
+  const { createPost, isLoading, error, successPostId } = useCreatePost()
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
   const [images, setImages] = useState<File[]>([])
@@ -72,6 +75,16 @@ const CreatePostForm = () => {
 
   return (
     <>
+      {/* 投稿完了ダイアログ */}
+      <Dialog
+        isOpen={successPostId !== null}
+        onClose={() => router.push(`/posts/${successPostId}`)}
+        variant="success"
+        title="募集を投稿しました！"
+        message="仲間が見つかることを願っています☕"
+        closeLabel="投稿を確認する"
+      />
+
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {error && <ErrorAlert message={error} />}
 

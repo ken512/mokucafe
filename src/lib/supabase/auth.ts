@@ -43,6 +43,11 @@ export const authenticateRequest = async (request: NextRequest): Promise<AuthRes
     return { success: false, message: "トークンが無効です" }
   }
 
+  // 匿名ユーザーは書き込み系APIの使用を禁止する
+  if (data.user.is_anonymous) {
+    return { success: false, message: "ゲストユーザーはこの操作を行えません。登録を行なってください。" }
+  }
+
   const userId = await resolveUserId(data.user.id)
   if (!userId) {
     return { success: false, message: "ユーザーが見つかりません" }

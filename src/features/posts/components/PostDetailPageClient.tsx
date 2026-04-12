@@ -3,6 +3,7 @@
 import { useState } from "react"
 import PostDetail from "./PostDetail"
 import EditPostForm from "./EditPostForm"
+import Dialog from "@/components/ui/Dialog"
 import { Post } from "../types"
 
 type Props = {
@@ -15,10 +16,12 @@ type Props = {
 const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner }: Props) => {
   const [post, setPost] = useState<Post>(initialPost)
   const [isEditing, setIsEditing] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   const handleSaved = (updated: Post) => {
     setPost(updated)
     setIsEditing(false)
+    setShowSuccessDialog(true)
   }
 
   if (isEditing) {
@@ -36,6 +39,14 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner }: Props) => {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* 編集完了ダイアログ */}
+      <Dialog
+        isOpen={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        variant="success"
+        title="募集内容を更新しました！"
+        message="変更が反映されました。"
+      />
       {/* オーナーに編集ボタンを表示する */}
       {isOwner && (
         <div className="flex justify-end">
