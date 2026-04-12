@@ -39,6 +39,16 @@ export const useSignup = () => {
       }
 
       if (data.session) {
+        // アプリDBのusersテーブルにユーザーを登録する
+        await fetch("/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+          body: JSON.stringify({ name: displayName }),
+        })
+
         // メール確認不要の設定の場合：即ログインしてホームへ
         showDialog({
           title: "登録完了！",
