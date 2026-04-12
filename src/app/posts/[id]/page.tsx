@@ -20,7 +20,7 @@ const PostDetailPage = async ({ params }: Props) => {
     prisma.post.findUnique({
       where: { id: postId },
       include: {
-        user: { select: { name: true, avatarUrl: true } },
+        user: { select: { name: true, avatarUrl: true, supabaseUserId: true } },
         _count: { select: { applications: true } },
       },
     }),
@@ -31,6 +31,8 @@ const PostDetailPage = async ({ params }: Props) => {
 
   const { data: { user } } = await supabase.auth.getUser()
   const isLoggedIn = !!user && user.is_anonymous !== true
+  // ログイン中ユーザーのSupabase UUIDと投稿者のIDが一致する場合に投稿者と判定する
+  const isOwner = isLoggedIn && user?.id === postRaw.user.supabaseUserId
 
   const post: Post = {
     id: postRaw.id,
@@ -59,7 +61,7 @@ const PostDetailPage = async ({ params }: Props) => {
           ☕ ← もどる
         </Link>
 
-        <PostDetail post={post} isLoggedIn={isLoggedIn} />
+        <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
       </main>
     </div>
   )

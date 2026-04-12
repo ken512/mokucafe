@@ -4,11 +4,13 @@ import ButtonLink from "@/components/ui/ButtonLink"
 import CafeMap from "./CafeMap"
 import ApplyButton from "./ApplyButton"
 import MediaGallery from "./MediaGallery"
+import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
 
 type Props = {
   post: Post
   isLoggedIn: boolean
+  isOwner: boolean
 }
 
 // "2026-04-11T14:00:00Z" → "2026/4/11 14:00"
@@ -23,7 +25,7 @@ const formatDate = (isoString: string): string => {
 }
 
 // 募集投稿の詳細表示コンポーネント
-const PostDetail = ({ post, isLoggedIn }: Props) => {
+const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
 
   return (
@@ -87,15 +89,24 @@ const PostDetail = ({ post, isLoggedIn }: Props) => {
         </div>
       </div>
 
-      {/* 参加申請 */}
-      {isLoggedIn ? (
-        <ApplyButton postId={post.id} />
-      ) : (
-        <div className="flex flex-col items-center gap-2">
-          <ButtonLink href="/login" variant="primary" size="lg" fullWidth>
-            ログインして参加申請する
-          </ButtonLink>
-          <p className="text-xs text-stone-500">参加申請にはログインが必要です</p>
+      {/* 参加申請（投稿者本人には表示しない） */}
+      {!isOwner && (
+        isLoggedIn ? (
+          <ApplyButton postId={post.id} />
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <ButtonLink href="/login" variant="primary" size="lg" fullWidth>
+              ログインして参加申請する
+            </ButtonLink>
+            <p className="text-xs text-stone-500">参加申請にはログインが必要です</p>
+          </div>
+        )
+      )}
+
+      {/* 削除ボタン（投稿者本人のみ表示） */}
+      {isOwner && (
+        <div className="flex justify-center pb-2">
+          <DeletePostButton postId={post.id} />
         </div>
       )}
     </div>
