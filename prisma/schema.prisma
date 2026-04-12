@@ -13,6 +13,10 @@ model User {
   name           String
   avatarUrl      String?
   bio            String?
+  xUrl           String?       // X（旧Twitter）のプロフィールURL
+  instagramUrl   String?       // Instagram のプロフィールURL
+  threadsUrl     String?       // Threads のプロフィールURL
+  githubUrl      String?       // GitHub のプロフィールURL
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
