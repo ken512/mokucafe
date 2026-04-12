@@ -3,7 +3,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import Header from "@/components/ui/Header"
-import PostDetail from "@/features/posts/components/PostDetail"
+import PostDetailPageClient from "@/features/posts/components/PostDetailPageClient"
 import { Post } from "@/features/posts/types"
 
 type Props = {
@@ -61,7 +61,7 @@ const PostDetailPage = async ({ params }: Props) => {
           ☕ ← もどる
         </Link>
 
-        <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+        <PostDetailPageClient initialPost={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
       </main>
     </div>
   )
