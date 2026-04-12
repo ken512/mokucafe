@@ -1,20 +1,27 @@
+import Image from "next/image"
+
 type Props = {
   address: string
   cafeName: string
 }
 
-// カフェの位置を Maps Embed API で表示する（APIキーはサーバープロキシで隠蔽）
+// カフェの位置を Maps Static API で表示する（サーバープロキシ経由でAPIキーを隠蔽）
+// Embed API（iframe + JS）と異なり PNG 画像を返すだけなので RefererNotAllowedMapError が起きない
 const CafeMap = ({ address, cafeName }: Props) => {
+  const src = `/api/places/embed?address=${encodeURIComponent(address)}`
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+
   return (
-    <iframe
-      src={`/api/places/embed?address=${encodeURIComponent(address)}`}
-      width="100%"
-      height="300"
-      className="w-full border-0"
-      loading="lazy"
-      referrerPolicy="no-referrer-when-downgrade"
-      title={`${cafeName}の地図`}
-    />
+    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" title={`${cafeName}をGoogle マップで開く`}>
+      <Image
+        src={src}
+        alt={`${cafeName}の地図`}
+        width={600}
+        height={300}
+        className="w-full rounded-lg"
+        unoptimized
+      />
+    </a>
   )
 }
 

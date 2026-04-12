@@ -3,33 +3,38 @@ import { NextRequest } from "next/server"
 export const dynamic = "force-dynamic"
 
 // GET /api/places/embed?address=xxx
-// Maps Embed API をサーバー経由でプロキシする（APIキーをブラウザに露出しない）
+// Maps Static API をサーバー経由でプロキシする（APIキーをブラウザに露出しない）
+// Embed API と異なり PNG 画像を返すだけなのでクライアント側で JS が実行されない
 export const GET = async (request: NextRequest) => {
   const address = request.nextUrl.searchParams.get("address")
   if (!address) {
     return new Response("address パラメータが必要です", { status: 400 })
   }
 
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY
+  const apiKey = process.env.GOOGLE_MAP_API_KEY
   if (!apiKey) {
     return new Response("Maps API が設定されていません", { status: 500 })
   }
 
-  const url = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(address)}&language=ja`
+  const encodedAddress = encodeURIComponent(address)
+  const url = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x300&markers=color:red|${encodedAddress}&language=ja&key=${apiKey}`
 
   try {
-    // リクエスト元のオリジンを Referer に設定して APIキー制限と一致させる
-    const origin = request.headers.get("origin") ?? request.headers.get("referer") ?? "http://localhost:3000"
-    const res = await fetch(url, {
-      headers: { Referer: origin },
-    })
-    const html = await res.text()
+    const res = await fetch(url)
 
-    return new Response(html, {
-      status: res.status,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
+    if (!res.ok) {
+      const body = await res.text()
+      console.error("[places/embed] Google Static Maps error:", res.status, body.slice(0, 300))
+      return new Response("地図の取得に失敗しました", { status: res.status })
+    }
+
+    const buffer = await res.arrayBuffer()
+    return new Response(buffer, {
+      status: 200,
+      headers: { "Content-Type": "image/png" },
     })
-  } catch {
-    return new Response("地図の取得に失敗しました", { status: 500 })
+  } catch (e) {
+    console.error("[places/embed] fetch error:", e)
+    return new Response(`地図の取得に失敗しました: ${String(e)}`, { status: 500 })
   }
 }
