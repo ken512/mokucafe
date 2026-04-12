@@ -20,6 +20,7 @@ const ProfileEditForm = ({ profile, onSave, onCancel }: Props) => {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatarUrl)
+  const [avatarRemoved, setAvatarRemoved] = useState(false)
   const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.bio ?? "")
   const [xUrl, setXUrl] = useState(profile.xUrl ?? "")
@@ -32,7 +33,14 @@ const ProfileEditForm = ({ profile, onSave, onCancel }: Props) => {
     if (!file) return
     setAvatarFile(file)
     setAvatarPreview(URL.createObjectURL(file))
+    setAvatarRemoved(false)
     e.target.value = ""
+  }
+
+  const handleAvatarRemove = () => {
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    setAvatarRemoved(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +53,8 @@ const ProfileEditForm = ({ profile, onSave, onCancel }: Props) => {
       threadsUrl,
       githubUrl,
       avatarFile,
+      // 削除フラグが立っていて新しいファイルもない場合は空文字でAPIに渡す（nullに変換される）
+      ...(avatarRemoved && !avatarFile ? { avatarUrl: "" } : {}),
     })
     if (updated) onSave(updated)
   }
@@ -80,7 +90,28 @@ const ProfileEditForm = ({ profile, onSave, onCancel }: Props) => {
             <span className="text-white text-xl">📷</span>
           </div>
         </button>
-        <p className="text-xs text-stone-400">タップして画像を変更</p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-xs text-stone-500 hover:text-stone-700 transition-colors"
+          >
+            画像を変更
+          </button>
+          {/* アバターが設定されている場合のみ削除ボタンを表示 */}
+          {avatarPreview && (
+            <>
+              <span className="text-stone-200">|</span>
+              <button
+                type="button"
+                onClick={handleAvatarRemove}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+              >
+                削除
+              </button>
+            </>
+          )}
+        </div>
         <input
           ref={fileInputRef}
           type="file"
