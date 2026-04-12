@@ -25,12 +25,18 @@ const formatDate = (isoString: string): string => {
 }
 
 // 募集投稿の詳細表示コンポーネント
+// 表示順: メディア → 募集内容 → 地図 → ホスト → 申請/削除
 const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
 
   return (
     <div className="flex flex-col gap-4">
-      {/* カフェ情報・投稿内容 */}
+      {/* 1. メディアギャラリー（写真・動画がある場合のみ表示） */}
+      {post.mediaUrls.length > 0 && (
+        <MediaGallery mediaUrls={post.mediaUrls} />
+      )}
+
+      {/* 2. カフェ情報・募集内容 */}
       <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-4">
         {/* カフェ名・住所 */}
         <div>
@@ -65,12 +71,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
         )}
       </div>
 
-      {/* メディアギャラリー（写真・動画がある場合のみ表示） */}
-      {post.mediaUrls.length > 0 && (
-        <MediaGallery mediaUrls={post.mediaUrls} />
-      )}
-
-      {/* 地図（住所がある場合のみ表示） */}
+      {/* 3. 地図（住所がある場合のみ表示） */}
       {post.cafeAddress && (
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
           <p className="text-sm font-medium text-stone-700 px-4 pt-4 pb-2">
