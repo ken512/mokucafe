@@ -51,7 +51,7 @@ const PostCard = ({ post }: Props) => {
         {/* タグ＋詳細ボタン */}
         <div className="flex items-center justify-between mt-1">
           <div className="flex gap-1.5 flex-wrap">
-            {post.tags.slice(0, 2).map((tag) => (
+            {post.tags.map((tag) => (
               <Tag key={tag} label={tag} />
             ))}
           </div>
