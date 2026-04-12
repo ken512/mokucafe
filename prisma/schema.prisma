@@ -32,6 +32,7 @@ model Post {
   capacity     Int           // 募集人数
   description  String        // 募集内容・説明
   tags         String[]      // 雰囲気タグ（例：["静かに作業", "会話OK"]）
+  mediaUrls    String[]      // カフェ写真・動画のURL（最大3件：画像2枚＋動画1本）
   status       PostStatus    @default(OPEN)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
