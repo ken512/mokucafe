@@ -33,6 +33,17 @@ export type Post = {
   applicantCount: number
 }
 
+// PATCH /api/posts/:id のリクエスト型（全フィールド任意）
+export type UpdatePostRequest = {
+  cafeName?: string
+  cafeAddress?: string
+  date?: string
+  capacity?: number
+  description?: string
+  tags?: string[]
+  mediaUrls?: string[]
+}
+
 // GET /api/posts のレスポンス型
 export type PostsResponse = {
   posts: Post[]

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { prisma } from "@/lib/prisma"
 import { authenticateRequest, extractBearerToken } from "@/lib/supabase/auth"
+import { validateUpdatePost } from "@/features/posts/validations/postSchema"
 
 export const dynamic = "force-dynamic"
 
@@ -47,6 +48,76 @@ export const GET = async (
     })
   } catch {
     return NextResponse.json({ error: "投稿の取得に失敗しました" }, { status: 500 })
+  }
+}
+
+// PATCH /api/posts/:id — 募集投稿を編集する（本人のみ）
+export const PATCH = async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) => {
+  const auth = await authenticateRequest(request)
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.message }, { status: 401 })
+  }
+
+  const { id } = await params
+  const postId = parseInt(id)
+  if (isNaN(postId)) {
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 })
+  }
+
+  const body = await request.json().catch(() => null)
+  const validation = validateUpdatePost(body)
+  if (!validation.success) {
+    return NextResponse.json({ errors: validation.errors }, { status: 400 })
+  }
+
+  try {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    })
+
+    if (!post) {
+      return NextResponse.json({ error: "投稿が見つかりません" }, { status: 404 })
+    }
+
+    if (post.userId !== auth.userId) {
+      return NextResponse.json({ error: "他のユーザーの投稿は編集できません" }, { status: 403 })
+    }
+
+    const { date, ...rest } = validation.data
+    const updated = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        ...rest,
+        ...(date ? { date: new Date(date) } : {}),
+      },
+      include: {
+        user: { select: { name: true, avatarUrl: true } },
+        _count: { select: { applications: true } },
+      },
+    })
+
+    return NextResponse.json({
+      post: {
+        id: updated.id,
+        cafeName: updated.cafeName,
+        cafeAddress: updated.cafeAddress,
+        date: updated.date.toISOString(),
+        capacity: updated.capacity,
+        description: updated.description,
+        tags: updated.tags,
+        mediaUrls: updated.mediaUrls,
+        status: updated.status,
+        createdAt: updated.createdAt.toISOString(),
+        host: { name: updated.user.name, avatarUrl: updated.user.avatarUrl },
+        applicantCount: updated._count.applications,
+      },
+    })
+  } catch {
+    return NextResponse.json({ error: "投稿の更新に失敗しました" }, { status: 500 })
   }
 }
 
