@@ -129,7 +129,7 @@ const ProfileEditForm = ({ profile, onSave, onCancel }: Props) => {
           { label: "X (Twitter)", value: xUrl, onChange: setXUrl, placeholder: "https://x.com/username" },
           { label: "Instagram", value: instagramUrl, onChange: setInstagramUrl, placeholder: "https://instagram.com/username" },
           { label: "Threads", value: threadsUrl, onChange: setThreadsUrl, placeholder: "https://threads.net/@username" },
-          { label: "GitHub", value: githubUrl, onChange: setGithubUrl, placeholder: "https://github.com/username" },
+          { label: "GitHub（エンジニアの方はぜひ！）", value: githubUrl, onChange: setGithubUrl, placeholder: "https://github.com/username" },
         ].map(({ label, value, onChange, placeholder }) => (
           <div key={label} className="flex flex-col gap-1">
             <label className="text-xs text-stone-500">{label}</label>
