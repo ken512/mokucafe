@@ -36,18 +36,19 @@ const CreatePostForm = () => {
   }
 
   // Enterキーでタグを追加する（フォーム送信は防ぐ）
+  // isComposing チェックで日本語IME変換確定時の誤発火を防ぐ
   const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return
     e.preventDefault()
     addTag()
   }
 
   const addTag = () => {
     const trimmed = tagInput.trim()
+    setTagInput("")
     // 空・重複・5個以上は追加しない
     if (!trimmed || tags.includes(trimmed) || tags.length >= 5) return
     setTags([...tags, trimmed])
-    setTagInput("")
   }
 
   const removeTag = (tag: string) => {
