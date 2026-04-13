@@ -5,8 +5,13 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Button from "@/components/ui/Button"
 
+type Props = {
+  variant?: "primary" | "outline" | "ghost" | "hero"
+  size?: "sm" | "md" | "lg"
+}
+
 // ログアウトボタン（クライアントコンポーネント）
-const LogoutButton = () => {
+const LogoutButton = ({ variant = "ghost", size = "md" }: Props) => {
   const router = useRouter()
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
@@ -32,8 +37,8 @@ const LogoutButton = () => {
   return (
     <div className="flex flex-col items-end gap-1">
       <Button
-        variant="ghost"
-        size="sm"
+        variant={variant}
+        size={size}
         isLoading={isLoading}
         loadingText="..."
         onClick={logout}

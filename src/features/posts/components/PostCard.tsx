@@ -84,7 +84,7 @@ const PostCard = ({ post }: Props) => {
 
         {/* 投稿者 */}
         <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
-          <Avatar name={post.host.name} />
+          <Avatar name={post.host.name} avatarUrl={post.host.avatarUrl} />
           <span className="text-sm text-stone-600">{post.host.name}</span>
         </div>
       </div>

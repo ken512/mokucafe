@@ -83,7 +83,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
 
       {/* ホスト情報 */}
       <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
-        <Avatar name={post.host.name} size="md" />
+        <Avatar name={post.host.name} avatarUrl={post.host.avatarUrl} size="md" />
         <div>
           <p className="text-xs text-stone-500">ホスト</p>
           <p className="text-sm font-medium text-stone-800">{post.host.name}</p>
