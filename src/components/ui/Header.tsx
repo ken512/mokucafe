@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
 import UserMenu from "./UserMenu"
+import GuestMenu from "./GuestMenu"
 
 // ヘッダー（認証状態に応じてUIを切り替えるサーバーコンポーネント）
 const Header = async () => {
@@ -38,14 +39,7 @@ const Header = async () => {
           )}
 
           {/* ゲストユーザー */}
-          {isGuest && (
-            <>
-              <span className="text-xs text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
-                ゲスト中
-              </span>
-              <ButtonLink href="/signup" variant="primary" size="sm">登録する</ButtonLink>
-            </>
-          )}
+          {isGuest && <GuestMenu />}
 
           {/* ログイン済みユーザー：アバター＋ドロップダウン */}
           {isLoggedIn && userProfile && (
