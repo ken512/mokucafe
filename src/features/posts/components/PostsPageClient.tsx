@@ -1,25 +1,35 @@
 "use client"
 
-import { useState, useTransition, useDeferredValue } from "react"
+import { useState, useEffect, useRef } from "react"
 import PostList from "./PostList"
 import PostFilter from "./PostFilter"
 
 // 募集一覧ページのクライアントコンポーネント（フィルター状態を管理する）
 const PostsPageClient = () => {
+  // 入力欄に表示する値（即時反映）
   const [q, setQ] = useState("")
   const [tag, setTag] = useState("")
-  const [, startTransition] = useTransition()
 
-  // タイピング中にUIがカクつかないよう useDeferredValue で検索を遅延する
-  const deferredQ = useDeferredValue(q)
-  const deferredTag = useDeferredValue(tag)
+  // APIに渡す値（デバウンス後に更新）
+  const [debouncedQ, setDebouncedQ] = useState("")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // q が変わるたびに 300ms デバウンスしてからAPIクエリを更新する
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setDebouncedQ(q), 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [q])
+
+  // タグはクリック操作なので即時反映でよい
+  const handleTagChange = (value: string) => setTag(value)
 
   const handleQChange = (value: string) => {
-    startTransition(() => setQ(value))
-  }
-
-  const handleTagChange = (value: string) => {
-    startTransition(() => setTag(value))
+    setQ(value)
+    // クリアしたときは即座に反映する（デバウンス待ちにしない）
+    if (!value) setDebouncedQ("")
   }
 
   return (
@@ -30,7 +40,7 @@ const PostsPageClient = () => {
         onQChange={handleQChange}
         onTagChange={handleTagChange}
       />
-      <PostList q={deferredQ || undefined} tag={deferredTag || undefined} />
+      <PostList q={debouncedQ || undefined} tag={tag || undefined} />
     </div>
   )
 }
