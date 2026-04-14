@@ -32,7 +32,8 @@ model Post {
   userId       Int
   cafeName     String        // カフェ名
   cafeAddress  String?       // カフェの住所
-  date         DateTime      // 作業予定日時
+  date         DateTime      // 作業開始日時
+  endDate      DateTime?     // 作業終了日時（nullの場合は終了時間なし）
   capacity     Int           // 募集人数
   description  String        // 募集内容・説明
   tags         String[]      // 雰囲気タグ（例：["静かに作業", "会話OK"]）
