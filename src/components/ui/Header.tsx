@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
@@ -23,10 +24,11 @@ const Header = async () => {
   return (
     <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div>
+        {/* ロゴ：クリックでホームへ遷移 */}
+        <Link href="/" className="hover:opacity-80 transition-opacity">
           <p className="text-xs text-stone-800">カフェで作業仲間を見つけよう</p>
           <p className="text-base font-bold text-stone-800">☕ もくカフェ</p>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-2">
           {/* 未ログイン */}
