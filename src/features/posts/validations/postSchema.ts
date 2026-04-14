@@ -43,9 +43,18 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
     errors.push({ field: "cafeAddress", message: "住所は文字列で入力してください" })
   }
 
-  // date
+  // date（開始日時）
   if (typeof b.date !== "string" || isNaN(Date.parse(b.date))) {
-    errors.push({ field: "date", message: "日時はISO8601形式で入力してください（例: 2025-05-01T10:00:00Z）" })
+    errors.push({ field: "date", message: "開始日時はISO8601形式で入力してください" })
+  }
+
+  // endDate（終了日時・必須）
+  if (typeof b.endDate !== "string" || isNaN(Date.parse(b.endDate))) {
+    errors.push({ field: "endDate", message: "終了日時はISO8601形式で入力してください" })
+  } else if (typeof b.date === "string" && !isNaN(Date.parse(b.date))) {
+    if (new Date(b.endDate) <= new Date(b.date as string)) {
+      errors.push({ field: "endDate", message: "終了日時は開始日時より後に設定してください" })
+    }
   }
 
   // capacity
@@ -82,6 +91,7 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
       cafeName: (b.cafeName as string).trim(),
       cafeAddress: b.cafeAddress as string | undefined,
       date: b.date as string,
+      endDate: b.endDate as string,
       capacity: b.capacity as number,
       description: (b.description as string).trim(),
       tags: b.tags as string[],
@@ -114,9 +124,19 @@ export const validateUpdatePost = (body: unknown): UpdateValidationResult => {
 
   if ("date" in b) {
     if (typeof b.date !== "string" || isNaN(Date.parse(b.date))) {
-      errors.push({ field: "date", message: "日時はISO8601形式で入力してください" })
+      errors.push({ field: "date", message: "開始日時はISO8601形式で入力してください" })
     } else {
       data.date = b.date
+    }
+  }
+
+  if ("endDate" in b) {
+    if (typeof b.endDate !== "string" || isNaN(Date.parse(b.endDate))) {
+      errors.push({ field: "endDate", message: "終了日時はISO8601形式で入力してください" })
+    } else if (data.date && new Date(b.endDate) <= new Date(data.date)) {
+      errors.push({ field: "endDate", message: "終了日時は開始日時より後に設定してください" })
+    } else {
+      data.endDate = b.endDate
     }
   }
 

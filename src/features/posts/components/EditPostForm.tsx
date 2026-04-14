@@ -6,6 +6,7 @@ import Image from "next/image"
 import FormField from "@/components/ui/FormField"
 import Button from "@/components/ui/Button"
 import ErrorAlert from "@/components/ui/ErrorAlert"
+import NumberInput from "@/components/ui/NumberInput"
 import CafeAutocompleteInput from "./CafeAutocompleteInput"
 import MediaUploader from "./MediaUploader"
 import { useUpdatePost } from "../hooks/useUpdatePost"
@@ -16,7 +17,8 @@ type FormValues = {
   cafeName: string
   cafeAddress?: string
   date: string
-  capacity: string
+  endDate: string
+  capacity: number
 }
 
 type Props = {
@@ -65,7 +67,8 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
       cafeName: post.cafeName,
       cafeAddress: post.cafeAddress ?? "",
       date: toDatetimeLocalValue(post.date),
-      capacity: String(post.capacity),
+      endDate: post.endDate ? toDatetimeLocalValue(post.endDate) : "",
+      capacity: post.capacity,
     },
   })
 
@@ -119,7 +122,8 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
       cafeName: values.cafeName,
       cafeAddress: values.cafeAddress,
       date: new Date(values.date).toISOString(),
-      capacity: Number(values.capacity),
+      endDate: new Date(values.endDate).toISOString(),
+      capacity: values.capacity,
       description,
       tags,
       keepMediaUrls,
@@ -162,30 +166,55 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
         {...register("cafeAddress")}
       />
 
-      {/* 作業日時 */}
-      <FormField
-        label="作業日時"
-        htmlFor="date"
-        type="datetime-local"
-        errorMessage={errors.date?.message}
-        {...register("date", { required: "作業日時を選択してください" })}
-      />
+      {/* 作業開始日時・終了日時 */}
+      <div className="flex flex-col gap-3">
+        <FormField
+          label="作業開始日時"
+          htmlFor="date"
+          type="datetime-local"
+          errorMessage={errors.date?.message}
+          {...register("date", { required: "開始日時を選択してください" })}
+        />
+        <FormField
+          label="作業終了日時"
+          htmlFor="endDate"
+          type="datetime-local"
+          errorMessage={errors.endDate?.message}
+          {...register("endDate", {
+            required: "終了日時を選択してください",
+            validate: (v) => {
+              const start = (document.getElementById("date") as HTMLInputElement)?.value
+              if (start && v && new Date(v) <= new Date(start)) {
+                return "終了日時は開始日時より後に設定してください"
+              }
+              return true
+            },
+          })}
+        />
+      </div>
 
       {/* 募集人数 */}
-      <FormField
-        label="募集人数"
-        htmlFor="capacity"
-        type="number"
-        min={1}
-        max={20}
-        placeholder="例：3"
-        errorMessage={errors.capacity?.message}
-        {...register("capacity", {
-          required: "募集人数を入力してください",
-          min: { value: 1, message: "1人以上で入力してください" },
-          max: { value: 20, message: "20人以下で入力してください" },
-        })}
-      />
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-stone-700">募集人数</label>
+        <Controller
+          name="capacity"
+          control={control}
+          rules={{ required: "募集人数を入力してください" }}
+          render={({ field }) => (
+            <NumberInput
+              id="capacity"
+              value={field.value}
+              onChange={field.onChange}
+              min={1}
+              max={20}
+              error={!!errors.capacity}
+            />
+          )}
+        />
+        {errors.capacity && (
+          <p className="text-xs text-red-500">{errors.capacity.message}</p>
+        )}
+      </div>
 
       {/* 作業内容・説明 */}
       <div className="flex flex-col gap-1.5">

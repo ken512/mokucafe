@@ -30,6 +30,7 @@ const uploadFile = async (
 type CreatePostInput = Omit<CreatePostRequest, "mediaUrls"> & {
   images: File[]     // 画像ファイル（最大2枚）
   video: File | null // 動画ファイル（最大1本）
+  endDate: string    // 作業終了日時（ISO8601）
 }
 
 // 募集投稿作成 hook

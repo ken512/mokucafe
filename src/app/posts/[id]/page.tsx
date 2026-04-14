@@ -39,6 +39,7 @@ const PostDetailPage = async ({ params }: Props) => {
     cafeName: postRaw.cafeName,
     cafeAddress: postRaw.cafeAddress,
     date: postRaw.date.toISOString(),
+    endDate: postRaw.endDate?.toISOString() ?? null,
     capacity: postRaw.capacity,
     description: postRaw.description,
     tags: postRaw.tags,

@@ -1,8 +1,12 @@
+"use client"
+
 import Image from "next/image"
 import { Post } from "../types"
 import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
+import { useWorkStatus } from "../hooks/useWorkStatus"
+import { getStatusDisplay } from "../utils/postStatus"
 
 // URLが動画ファイルかどうかを判定する
 const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
@@ -25,6 +29,8 @@ const PostCard = ({ post }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
   // 画像URLを先頭から探す（動画は除く）
   const thumbnailUrl = post.mediaUrls.find((url) => !isVideoUrl(url))
+  // リアルタイムステータス（endDate がない場合は undefined）
+  const workStatus = useWorkStatus(post.date, post.endDate)
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -43,8 +49,10 @@ const PostCard = ({ post }: Props) => {
         )}
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 flex items-end justify-between p-3">
+          {/* 開始〜終了の期間表示 */}
           <span className="text-white text-xs bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
             {formatDate(post.date)}
+            {post.endDate && ` 〜 ${formatDate(post.endDate)}`}
           </span>
           <span className="text-white text-xs bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
             残り{remainingSlots}枠
@@ -54,11 +62,19 @@ const PostCard = ({ post }: Props) => {
 
       {/* カード下部：コンテンツ */}
       <div className="p-4 flex flex-col gap-2">
-        <div>
-          {post.cafeAddress && (
-            <p className="text-xs text-amber-800 font-medium">{post.cafeAddress}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            {post.cafeAddress && (
+              <p className="text-xs text-amber-800 font-medium">{post.cafeAddress}</p>
+            )}
+            <h2 className="text-base font-bold text-stone-800 mt-0.5">{post.cafeName}</h2>
+          </div>
+          {/* リアルタイムステータスバッジ */}
+          {workStatus && (
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${getStatusDisplay(workStatus).badgeClass}`}>
+              {getStatusDisplay(workStatus).label}
+            </span>
           )}
-          <h2 className="text-base font-bold text-stone-800 mt-0.5">{post.cafeName}</h2>
         </div>
 
         <p className="text-sm text-stone-800 leading-relaxed line-clamp-2">

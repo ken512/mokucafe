@@ -2,7 +2,8 @@
 export type CreatePostRequest = {
   cafeName: string
   cafeAddress?: string
-  date: string // ISO8601
+  date: string    // 作業開始日時（ISO8601）
+  endDate: string // 作業終了日時（ISO8601）
   capacity: number
   description: string
   tags: string[]
@@ -19,7 +20,8 @@ export type Post = {
   id: number
   cafeName: string
   cafeAddress: string | null
-  date: string // ISO8601
+  date: string    // 作業開始日時（ISO8601）
+  endDate: string | null // 作業終了日時（ISO8601）
   capacity: number
   description: string
   tags: string[]
@@ -38,6 +40,7 @@ export type UpdatePostRequest = {
   cafeName?: string
   cafeAddress?: string
   date?: string
+  endDate?: string
   capacity?: number
   description?: string
   tags?: string[]
