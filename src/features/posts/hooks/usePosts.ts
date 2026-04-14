@@ -11,20 +11,27 @@ const fetcher = (url: string): Promise<PostsResponse> =>
     return res.json()
   })
 
-// ページインデックスとひとつ前のレスポンスからURLを生成
-const getKey = (
-  pageIndex: number,
-  previousPageData: PostsResponse | null
-) => {
-  // 前のページの nextCursor が null = 最終ページ → これ以上取得しない
-  if (previousPageData && previousPageData.nextCursor === null) return null
-  if (pageIndex === 0) return `/api/posts?limit=${LIMIT}`
-  return `/api/posts?cursor=${previousPageData!.nextCursor}&limit=${LIMIT}`
+type FilterParams = {
+  q?: string   // カフェ名・住所・説明文のあいまい検索
+  tag?: string // タグの完全一致フィルター
 }
 
-export const usePosts = () => {
+// ページインデックスとひとつ前のレスポンスからURLを生成
+const makeGetKey = (params: FilterParams) =>
+  (pageIndex: number, previousPageData: PostsResponse | null) => {
+    if (previousPageData && previousPageData.nextCursor === null) return null
+    const qs = new URLSearchParams({ limit: String(LIMIT) })
+    if (params.q) qs.set("q", params.q)
+    if (params.tag) qs.set("tag", params.tag)
+    if (pageIndex > 0 && previousPageData?.nextCursor) {
+      qs.set("cursor", String(previousPageData.nextCursor))
+    }
+    return `/api/posts?${qs.toString()}`
+  }
+
+export const usePosts = (params: FilterParams = {}) => {
   const { data, error, isLoading, size, setSize, isValidating } =
-    useSWRInfinite<PostsResponse>(getKey, fetcher)
+    useSWRInfinite<PostsResponse>(makeGetKey(params), fetcher)
 
   const posts: Post[] = data ? data.flatMap((page) => page.posts) : []
   // 追加ページをロード中かどうか（初回ロードとは区別する）

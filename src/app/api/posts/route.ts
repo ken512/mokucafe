@@ -8,15 +8,31 @@ export const dynamic = "force-dynamic"
 
 const LIMIT = 10
 
-// GET /api/posts?cursor=<id>&limit=10
+// GET /api/posts?cursor=<id>&limit=10&q=<検索>&tag=<タグ>
 export const GET = async (request: NextRequest) => {
   const { searchParams } = request.nextUrl
   const cursor = searchParams.get("cursor")
+  // カフェ名・説明文のあいまい検索キーワード
+  const q = searchParams.get("q")?.trim() || null
+  // タグフィルター（完全一致）
+  const tag = searchParams.get("tag")?.trim() || null
 
   try {
     // limit + 1 件取得して「次のページがあるか」を判定する
     const posts = await prisma.post.findMany({
-      where: { status: "OPEN" },
+      where: {
+        status: "OPEN",
+        ...(q
+          ? {
+              OR: [
+                { cafeName: { contains: q, mode: "insensitive" } },
+                { cafeAddress: { contains: q, mode: "insensitive" } },
+                { description: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+        ...(tag ? { tags: { has: tag } } : {}),
+      },
       take: LIMIT + 1,
       ...(cursor
         ? { cursor: { id: parseInt(cursor) }, skip: 1 }
