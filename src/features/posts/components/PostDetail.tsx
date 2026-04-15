@@ -1,3 +1,5 @@
+"use client"
+
 import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
@@ -6,6 +8,8 @@ import ApplyButton from "./ApplyButton"
 import MediaGallery from "./MediaGallery"
 import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
+import { useWorkStatus } from "../hooks/useWorkStatus"
+import { getStatusDisplay } from "../utils/postStatus"
 
 type Props = {
   post: Post
@@ -28,6 +32,7 @@ const formatDate = (isoString: string): string => {
 // 表示順: メディア → 募集内容 → 地図 → ホスト → 申請/削除
 const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
+  const workStatus = useWorkStatus(post.date, post.endDate)
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,14 +51,20 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
           <h1 className="text-xl font-bold text-stone-800 mt-0.5">{post.cafeName}</h1>
         </div>
 
-        {/* 日時・残枠 */}
+        {/* 日時・残枠・ステータス */}
         <div className="flex gap-2 flex-wrap">
           <span className="flex items-center gap-1.5 text-sm text-stone-600 bg-stone-50 px-3 py-1.5 rounded-full">
             📅 {formatDate(post.date)}
+            {post.endDate && ` 〜 ${formatDate(post.endDate)}`}
           </span>
           <span className="flex items-center gap-1.5 text-sm text-stone-600 bg-stone-50 px-3 py-1.5 rounded-full">
             👥 残り{remainingSlots}枠 / {post.capacity}人
           </span>
+          {workStatus && (
+            <span className={`flex items-center text-sm font-medium px-3 py-1.5 rounded-full ${getStatusDisplay(workStatus).badgeClass}`}>
+              {getStatusDisplay(workStatus).label}
+            </span>
+          )}
         </div>
 
         {/* 作業内容 */}
@@ -83,7 +94,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
 
       {/* ホスト情報 */}
       <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
-        <Avatar name={post.host.name} size="md" />
+        <Avatar name={post.host.name} avatarUrl={post.host.avatarUrl} size="md" />
         <div>
           <p className="text-xs text-stone-500">ホスト</p>
           <p className="text-sm font-medium text-stone-800">{post.host.name}</p>

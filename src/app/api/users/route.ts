@@ -30,6 +30,11 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: "トークンが無効です" }, { status: 401 })
   }
 
+  // 匿名ユーザーはアプリDBへの登録を禁止する（書き込み系APIの悪用を防ぐ）
+  if (data.user.is_anonymous) {
+    return NextResponse.json({ error: "ゲストユーザーは登録できません" }, { status: 403 })
+  }
+
   const supabaseUserId = data.user.id
 
   // すでに登録済みの場合はそのまま返す（冪等性を保つ）

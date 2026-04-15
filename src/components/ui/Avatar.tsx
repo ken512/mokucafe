@@ -16,7 +16,7 @@ const sizePx = { sm: 24, md: 32 }
 // ユーザーアイコン（avatarUrl があれば画像、なければ名前の頭文字を表示）
 const Avatar = ({ name, avatarUrl, size = "sm" }: Props) => {
   return (
-    <div className={`${sizeClass[size]} rounded-full bg-amber-100 text-amber-900 font-bold flex items-center justify-center shrink-0 overflow-hidden`}>
+    <div className={`${sizeClass[size]} rounded-full overflow-hidden bg-amber-100 shrink-0`}>
       {avatarUrl ? (
         <Image
           src={avatarUrl}
@@ -27,7 +27,9 @@ const Avatar = ({ name, avatarUrl, size = "sm" }: Props) => {
           unoptimized
         />
       ) : (
-        name?.[0] ?? "?"
+        <div className="w-full h-full flex items-center justify-center text-amber-900 font-bold">
+          {name?.[0] ?? "?"}
+        </div>
       )}
     </div>
   )

@@ -55,6 +55,7 @@ export const GET = async (request: NextRequest) => {
         cafeAddress: post.cafeAddress,
         cafePlaceId: post.cafePlaceId,
         date: post.date.toISOString(),
+        endDate: post.endDate?.toISOString() ?? null,
         capacity: post.capacity,
         description: post.description,
         tags: post.tags,
@@ -89,7 +90,7 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ errors: validation.errors }, { status: 400 })
   }
 
-  const { cafeName, cafeAddress, cafePlaceId, date, capacity, description, tags, mediaUrls } = validation.data
+  const { cafeName, cafeAddress, cafePlaceId, date, endDate, capacity, description, tags, mediaUrls } = validation.data
 
   try {
     const post = await prisma.post.create({
@@ -99,6 +100,7 @@ export const POST = async (request: NextRequest) => {
         cafeAddress,
         cafePlaceId,
         date: new Date(date),
+        endDate: new Date(endDate),
         capacity,
         description,
         tags,
@@ -118,6 +120,7 @@ export const POST = async (request: NextRequest) => {
           cafeAddress: post.cafeAddress,
           cafePlaceId: post.cafePlaceId,
           date: post.date.toISOString(),
+          endDate: post.endDate?.toISOString() ?? null,
           capacity: post.capacity,
           description: post.description,
           tags: post.tags,
