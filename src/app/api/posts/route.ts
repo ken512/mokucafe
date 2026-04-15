@@ -8,8 +8,19 @@ export const dynamic = "force-dynamic"
 
 const LIMIT = 10
 
+// 作業終了から1時間以上経過した投稿を非同期で削除する（レスポンスをブロックしない）
+const cleanupExpiredPosts = () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+  prisma.post.deleteMany({
+    where: { endDate: { lt: oneHourAgo } },
+  }).catch((e) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
+}
+
 // GET /api/posts?cursor=<id>&limit=10&q=<検索>&tag=<タグ>
 export const GET = async (request: NextRequest) => {
+  // 一覧取得のついでに期限切れ投稿をバックグラウンドで削除する
+  cleanupExpiredPosts()
+
   const { searchParams } = request.nextUrl
   const cursor = searchParams.get("cursor")
   // カフェ名・説明文のあいまい検索キーワード
