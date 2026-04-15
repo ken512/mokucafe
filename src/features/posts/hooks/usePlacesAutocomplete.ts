@@ -5,8 +5,8 @@ import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
 type Location = { lat: number; lng: number }
 
-// input・area は外部から渡す（area はエリア絞り込み用の任意テキスト）
-export const usePlacesAutocomplete = (input: string, area: string) => {
+// input は外部から渡す
+export const usePlacesAutocomplete = (input: string) => {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
   // 現在地取得後に Near by Search で取得した近くのカフェ一覧
   const [nearbySuggestions, setNearbySuggestions] = useState<PlaceSuggestion[]>([])
@@ -16,7 +16,7 @@ export const usePlacesAutocomplete = (input: string, area: string) => {
   const [isOpen, setIsOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // input または area が変わるたびに 300ms デバウンスで候補を取得する
+  // input が変わるたびに 300ms デバウンスで候補を取得する
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -30,15 +30,10 @@ export const usePlacesAutocomplete = (input: string, area: string) => {
     debounceRef.current = setTimeout(async () => {
       setIsLoading(true)
       try {
-        // エリアが指定されていればクエリに付加して検索精度を上げる
-        // エリアが指定されている場合は現在地バイアスを使わない（エリア優先）
-        const effectiveInput = area.trim() ? `${input} ${area.trim()}` : input
-        const locationParams = area.trim() ? {} : (location ?? {})
-
         const res = await fetch("/api/places/autocomplete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: effectiveInput, ...locationParams }),
+          body: JSON.stringify({ input, ...(location ?? {}) }),
         })
         const data = await res.json()
         if (data.error) {
@@ -54,7 +49,7 @@ export const usePlacesAutocomplete = (input: string, area: string) => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [input, area, location, nearbySuggestions.length])
+  }, [input, location, nearbySuggestions.length])
 
   // ブラウザの位置情報を取得し、取得後に Nearby Search でカフェを先読みする
   const locateMe = useCallback(() => {
@@ -92,12 +87,6 @@ export const usePlacesAutocomplete = (input: string, area: string) => {
     }
   }, [input, nearbySuggestions.length])
 
-  // 位置情報をリセットする（エリア指定モードへ切り替える際に使う）
-  const clearLocation = useCallback(() => {
-    setLocation(null)
-    setNearbySuggestions([])
-  }, [])
-
   const closeSuggestions = useCallback(() => setIsOpen(false), [])
 
   // 表示する候補：入力中は autocomplete、未入力は nearby
@@ -113,7 +102,6 @@ export const usePlacesAutocomplete = (input: string, area: string) => {
     isOpen,
     locateMe,
     openNearby,
-    clearLocation,
     closeSuggestions,
   }
 }
