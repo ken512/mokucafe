@@ -38,6 +38,7 @@ const PostDetailPage = async ({ params }: Props) => {
     id: postRaw.id,
     cafeName: postRaw.cafeName,
     cafeAddress: postRaw.cafeAddress,
+    cafePlaceId: postRaw.cafePlaceId,
     date: postRaw.date.toISOString(),
     capacity: postRaw.capacity,
     description: postRaw.description,

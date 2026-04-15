@@ -53,6 +53,8 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
   const [tags, setTags] = useState<string[]>(post.tags)
   const [tagInput, setTagInput] = useState("")
   const [description, setDescription] = useState(post.description)
+  // 編集時にAutocompleteで再選択した場合のみ更新する（未選択なら既存値を引き継ぐ）
+  const [cafePlaceId, setCafePlaceId] = useState<string | undefined>(post.cafePlaceId ?? undefined)
 
   const {
     register,
@@ -71,6 +73,7 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
 
   const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
     setValue("cafeAddress", suggestion.address, { shouldValidate: true })
+    setCafePlaceId(suggestion.placeId)
   }
 
   // 既存メディアを削除する
@@ -118,6 +121,7 @@ const EditPostForm = ({ post, onSaved, onCancel }: Props) => {
       postId: post.id,
       cafeName: values.cafeName,
       cafeAddress: values.cafeAddress,
+      cafePlaceId,
       date: new Date(values.date).toISOString(),
       capacity: Number(values.capacity),
       description,

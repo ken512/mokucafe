@@ -32,6 +32,7 @@ model Post {
   userId       Int
   cafeName     String        // カフェ名
   cafeAddress  String?       // カフェの住所
+  cafePlaceId  String?       // Google Places の placeId（地図の正確なピン留めに使用）
   date         DateTime      // 作業開始日時
   endDate      DateTime?     // 作業終了日時（任意）
   capacity     Int           // 募集人数

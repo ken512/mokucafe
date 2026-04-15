@@ -23,6 +23,7 @@ const CreatePostForm = () => {
   const [tagInput, setTagInput] = useState("")
   const [images, setImages] = useState<File[]>([])
   const [video, setVideo] = useState<File | null>(null)
+  const [cafePlaceId, setCafePlaceId] = useState<string | undefined>(undefined)
 
   const {
     register,
@@ -36,6 +37,7 @@ const CreatePostForm = () => {
   // cafeName は Controller 経由で onChange が呼ばれるため setValue 不要
   const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
     setValue("cafeAddress", suggestion.address, { shouldValidate: true })
+    setCafePlaceId(suggestion.placeId)
   }
 
   // Enterキーでタグを追加する（フォーム送信は防ぐ）
@@ -64,6 +66,7 @@ const CreatePostForm = () => {
       // datetime-local の値（"2026-04-15T10:00"）を ISO8601 に変換する
       date: new Date(values.date).toISOString(),
       capacity: Number(values.capacity),
+      cafePlaceId,
       tags,
       images,
       video,
