@@ -17,10 +17,15 @@ const SkeletonCard = () => (
   </div>
 )
 
+type Props = {
+  q?: string
+  tag?: string
+}
+
 // 募集一覧（無限スクロール対応）
-const PostList = () => {
+const PostList = ({ q, tag }: Props) => {
   const { posts, isLoading, error, isLoadingMore, hasMore, loadMore } =
-    usePosts()
+    usePosts({ q, tag })
 
   // センチネルdivがビューポートに入ったら次のページを取得する
   const sentinelRef = useRef<HTMLDivElement>(null)

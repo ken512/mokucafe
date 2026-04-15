@@ -70,6 +70,9 @@ const Home = () => {
         <section className="max-w-2xl mx-auto w-full px-4 py-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-stone-700">現在の募集</h2>
+            <ButtonLink href="/posts" variant="ghost" size="sm">
+              すべて見る →
+            </ButtonLink>
           </div>
           <PostList />
         </section>
