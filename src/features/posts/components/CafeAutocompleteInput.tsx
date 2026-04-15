@@ -29,11 +29,13 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
 
   const {
     suggestions,
+    isNearby,
     isLoading,
     isLocating,
     isLocationSet,
     isOpen,
     locateMe,
+    openNearby,
     closeSuggestions,
   } = usePlacesAutocomplete(value)
 
@@ -100,6 +102,7 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
           onChange={(e) => onChange(e.target.value)}
           placeholder="例：スターバックス 渋谷店"
           autoComplete="off"
+          onFocus={openNearby}
           className={[
             "border rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-300",
             "focus:outline-none focus:ring-2 focus:ring-amber-900/30 focus:border-amber-900",
@@ -116,6 +119,12 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
         {/* 候補ドロップダウン */}
         {isOpen && suggestions.length > 0 && (
           <ul className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-md overflow-hidden">
+            {/* Near by モード時のラベル */}
+            {isNearby && (
+              <li className="px-4 py-2 text-xs text-amber-800 font-medium bg-amber-50 border-b border-amber-100">
+                📍 現在地周辺のカフェ
+              </li>
+            )}
             {suggestions.map((s) => (
               <li key={s.placeId}>
                 <button
