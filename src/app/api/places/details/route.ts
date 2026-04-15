@@ -35,7 +35,10 @@ export const GET = async (request: NextRequest) => {
     }
 
     const data: { formattedAddress?: string } = await res.json()
-    return NextResponse.json({ formattedAddress: data.formattedAddress ?? null })
+    // 先頭の "Japan, " / "日本、" などの国名プレフィックスを除去する
+    const formattedAddress = data.formattedAddress
+      ?.replace(/^(Japan,\s*|日本、\s*)/i, "") ?? null
+    return NextResponse.json({ formattedAddress })
   } catch (e) {
     console.error("[places/details] fetch error:", e)
     return NextResponse.json({ error: "通信エラーが発生しました" }, { status: 500 })
