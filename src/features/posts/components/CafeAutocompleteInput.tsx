@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 import { usePlacesAutocomplete } from "../hooks/usePlacesAutocomplete"
 
@@ -12,8 +12,21 @@ type Props = {
   error?: boolean
 }
 
+// placeId から建物名・郵便番号を含む完全な住所を取得する
+const fetchFormattedAddress = async (placeId: string): Promise<string | null> => {
+  try {
+    const res = await fetch(`/api/places/details?placeId=${encodeURIComponent(placeId)}`)
+    const data = await res.json()
+    return data.formattedAddress ?? null
+  } catch {
+    return null
+  }
+}
+
 // カフェ名入力 + Places Autocomplete ドロップダウン
 const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false)
+
   const {
     suggestions,
     isLoading,
@@ -37,12 +50,21 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [closeSuggestions])
 
-  const handleSelect = (suggestion: PlaceSuggestion) => {
-    // react-hook-form の cafeName を更新する
+  // 候補を選択したとき：カフェ名を即時反映し、Place Details で完全な住所を取得する
+  const handleSelect = async (suggestion: PlaceSuggestion) => {
     onChange(suggestion.name)
-    // cafeAddress など他のフィールドの更新は親に委譲する
-    onSelect(suggestion)
     closeSuggestions()
+    setIsFetchingAddress(true)
+
+    // Place Details API で建物名・郵便番号込みの完全な住所を取得する
+    const formattedAddress = await fetchFormattedAddress(suggestion.placeId)
+    setIsFetchingAddress(false)
+
+    // 取得できれば完全な住所、失敗時は Autocomplete の住所にフォールバック
+    onSelect({
+      ...suggestion,
+      address: formattedAddress ?? suggestion.address,
+    })
   }
 
   return (
@@ -85,9 +107,9 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
             error ? "border-red-300 focus:ring-red-300/30 focus:border-red-400" : "border-stone-200",
           ].join(" ")}
         />
-        {isLoading && (
+        {(isLoading || isFetchingAddress) && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">
-            検索中...
+            {isFetchingAddress ? "住所を取得中..." : "検索中..."}
           </span>
         )}
 
