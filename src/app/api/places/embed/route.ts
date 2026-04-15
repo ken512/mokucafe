@@ -2,11 +2,14 @@ import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/places/embed?address=xxx
+// GET /api/places/embed?address=xxx&cafeName=xxx&placeId=xxx
 // Maps Static API をサーバー経由でプロキシする（APIキーをブラウザに露出しない）
-// Embed API と異なり PNG 画像を返すだけなのでクライアント側で JS が実行されない
 export const GET = async (request: NextRequest) => {
-  const address = request.nextUrl.searchParams.get("address")
+  const { searchParams } = request.nextUrl
+  const address = searchParams.get("address")
+  const cafeName = searchParams.get("cafeName") ?? ""
+  const placeId = searchParams.get("placeId")
+
   if (!address) {
     return new Response("address パラメータが必要です", { status: 400 })
   }
@@ -16,8 +19,16 @@ export const GET = async (request: NextRequest) => {
     return new Response("Maps API が設定されていません", { status: 500 })
   }
 
-  const encodedAddress = encodeURIComponent(address)
-  const url = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x300&markers=color:red|${encodedAddress}&language=ja&key=${apiKey}`
+  // placeId があれば place_id: で正確にピン留め、なければカフェ名+住所でジオコーディング
+  const markerLocation = placeId
+    ? `place_id:${placeId}`
+    : encodeURIComponent(`${cafeName} ${address}`)
+
+  const center = placeId
+    ? `place_id:${placeId}`
+    : encodeURIComponent(`${cafeName} ${address}`)
+
+  const url = `https://maps.googleapis.com/maps/api/staticmap?center=${center}&zoom=16&size=600x300&markers=color:red|${markerLocation}&language=ja&key=${apiKey}`
 
   try {
     const res = await fetch(url)

@@ -77,7 +77,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
           <p className="text-sm font-medium text-stone-700 px-4 pt-4 pb-2">
             カフェの場所
           </p>
-          <CafeMap address={post.cafeAddress} cafeName={post.cafeName} />
+          <CafeMap address={post.cafeAddress} cafeName={post.cafeName} placeId={post.cafePlaceId} />
         </div>
       )}
 
