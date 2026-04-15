@@ -1,3 +1,4 @@
+import Link from "next/link"
 import Header from "@/components/ui/Header"
 import ButtonLink from "@/components/ui/ButtonLink"
 import PostsPageClient from "@/features/posts/components/PostsPageClient"
@@ -8,6 +9,14 @@ const PostsPage = () => {
     <div className="min-h-screen bg-stone-100">
       <Header />
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+        {/* 戻るリンク */}
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-full transition-colors self-start"
+        >
+          ☕ ← もどる
+        </Link>
+
         {/* ページヘッダー */}
         <div className="flex items-center justify-between">
           <div>
