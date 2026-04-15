@@ -17,7 +17,8 @@ export const GET = async (request: NextRequest) => {
 
   try {
     const res = await fetch(
-      `https://places.googleapis.com/v1/places/${placeId}`,
+      // languageCode=ja で日本語住所を取得する
+      `https://places.googleapis.com/v1/places/${placeId}?languageCode=ja`,
       {
         headers: {
           "X-Goog-Api-Key": apiKey,
