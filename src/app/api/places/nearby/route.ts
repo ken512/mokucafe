@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PlaceSuggestion } from "../autocomplete/route"
+import { requireSession } from "@/lib/supabase/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -16,6 +17,10 @@ type NearbyResponse = {
 
 // POST /api/places/nearby — 現在地周辺のカフェを取得する（カフェ特化 Nearby Search）
 export const POST = async (request: NextRequest) => {
+  if (!(await requireSession())) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+  }
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: "Places API が設定されていません" }, { status: 500 })
