@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { requireSession } from "@/lib/supabase/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -27,6 +28,10 @@ export type PlaceSuggestion = {
 
 // POST /api/places/autocomplete — カフェ名の入力補助（サーバー経由でAPIキーを秘匿する）
 export const POST = async (request: NextRequest) => {
+  if (!(await requireSession())) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+  }
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: "Places API が設定されていません" }, { status: 500 })

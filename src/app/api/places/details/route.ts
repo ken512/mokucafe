@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { requireSession } from "@/lib/supabase/auth"
 
 export const dynamic = "force-dynamic"
 
 // GET /api/places/details?placeId=xxx
 // Place Details API（New）で建物名・郵便番号を含む完全な住所を取得する
 export const GET = async (request: NextRequest) => {
+  if (!(await requireSession())) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+  }
+
   const placeId = request.nextUrl.searchParams.get("placeId")
   if (!placeId) {
     return NextResponse.json({ error: "placeId パラメータが必要です" }, { status: 400 })

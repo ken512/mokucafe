@@ -33,14 +33,18 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
 
   const b = body as Record<string, unknown>
 
-  // cafeName
+  // cafeName（最大100文字）
   if (typeof b.cafeName !== "string" || b.cafeName.trim() === "") {
     errors.push({ field: "cafeName", message: "カフェ名は必須です" })
+  } else if (b.cafeName.length > 100) {
+    errors.push({ field: "cafeName", message: "カフェ名は100文字以内で入力してください" })
   }
 
-  // cafeAddress（任意）
+  // cafeAddress（任意・最大200文字）
   if (b.cafeAddress !== undefined && typeof b.cafeAddress !== "string") {
     errors.push({ field: "cafeAddress", message: "住所は文字列で入力してください" })
+  } else if (typeof b.cafeAddress === "string" && b.cafeAddress.length > 200) {
+    errors.push({ field: "cafeAddress", message: "住所は200文字以内で入力してください" })
   }
 
   // date（開始日時）
@@ -62,14 +66,20 @@ export const validateCreatePost = (body: unknown): ValidationResult => {
     errors.push({ field: "capacity", message: "募集人数は1以上の数値で入力してください" })
   }
 
-  // description
+  // description（最大1000文字）
   if (typeof b.description !== "string" || b.description.trim() === "") {
     errors.push({ field: "description", message: "説明は必須です" })
+  } else if (b.description.length > 1000) {
+    errors.push({ field: "description", message: "説明は1000文字以内で入力してください" })
   }
 
-  // tags
+  // tags（最大5個・各20文字以内）
   if (!Array.isArray(b.tags) || b.tags.some((t) => typeof t !== "string")) {
     errors.push({ field: "tags", message: "タグは文字列の配列で入力してください" })
+  } else if (b.tags.length > 5) {
+    errors.push({ field: "tags", message: "タグは5個以内で入力してください" })
+  } else if ((b.tags as string[]).some((t) => t.length > 20)) {
+    errors.push({ field: "tags", message: "タグは1つ20文字以内で入力してください" })
   }
 
   // mediaUrls（任意・最大3件）
@@ -113,13 +123,19 @@ export const validateUpdatePost = (body: unknown): UpdateValidationResult => {
   if ("cafeName" in b) {
     if (typeof b.cafeName !== "string" || b.cafeName.trim() === "") {
       errors.push({ field: "cafeName", message: "カフェ名は必須です" })
+    } else if (b.cafeName.length > 100) {
+      errors.push({ field: "cafeName", message: "カフェ名は100文字以内で入力してください" })
     } else {
       data.cafeName = b.cafeName.trim()
     }
   }
 
   if ("cafeAddress" in b) {
-    data.cafeAddress = typeof b.cafeAddress === "string" ? b.cafeAddress : undefined
+    if (typeof b.cafeAddress === "string" && b.cafeAddress.length > 200) {
+      errors.push({ field: "cafeAddress", message: "住所は200文字以内で入力してください" })
+    } else {
+      data.cafeAddress = typeof b.cafeAddress === "string" ? b.cafeAddress : undefined
+    }
   }
 
   if ("date" in b) {
@@ -151,6 +167,8 @@ export const validateUpdatePost = (body: unknown): UpdateValidationResult => {
   if ("description" in b) {
     if (typeof b.description !== "string" || b.description.trim() === "") {
       errors.push({ field: "description", message: "説明は必須です" })
+    } else if (b.description.length > 1000) {
+      errors.push({ field: "description", message: "説明は1000文字以内で入力してください" })
     } else {
       data.description = b.description.trim()
     }
@@ -159,6 +177,10 @@ export const validateUpdatePost = (body: unknown): UpdateValidationResult => {
   if ("tags" in b) {
     if (!Array.isArray(b.tags) || b.tags.some((t) => typeof t !== "string")) {
       errors.push({ field: "tags", message: "タグは文字列の配列で入力してください" })
+    } else if (b.tags.length > 5) {
+      errors.push({ field: "tags", message: "タグは5個以内で入力してください" })
+    } else if ((b.tags as string[]).some((t) => t.length > 20)) {
+      errors.push({ field: "tags", message: "タグは1つ20文字以内で入力してください" })
     } else {
       data.tags = b.tags as string[]
     }
