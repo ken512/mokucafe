@@ -109,17 +109,19 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
+      // スマホ・PC 共通: 先にシェア文をクリップボードにコピーする
+      await navigator.clipboard.writeText(fullText)
+      setIsInstagramTextCopied(true)
+      setTimeout(() => setIsInstagramTextCopied(false), 3000)
+
       const blob = await captureCard()
       const file = blob ? new File([blob], "mokucafe.png", { type: "image/png" }) : null
 
-      // スマホかつ Web Share API（ファイル共有）対応の場合はネイティブ共有シートを使う
+      // スマホ: Web Share API 対応なら共有シートを開く（Instagram アプリに渡せる）
       if (file && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text: fullText })
       } else {
-        // PC またはフォールバック: テキストをコピーして Instagram を開く
-        await navigator.clipboard.writeText(fullText)
-        setIsInstagramTextCopied(true)
-        setTimeout(() => setIsInstagramTextCopied(false), 3000)
+        // PC: Instagram ウェブを開く（コピー済みテキストを貼り付けて投稿）
         window.open("https://www.instagram.com/", "_blank")
       }
     }
@@ -232,8 +234,8 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                       "📸 Instagram にシェアする"
                     )}
                   </button>
-                  {/* PC からの Instagram シェア時にコピー済みを通知する */}
-                  {isInstagramTextCopied && (
+                  {/* Instagram シェア時にコピー済みを通知する（スマホ・PC 共通） */}
+                  {isInstagramTextCopied && activePlatform === "instagram" && (
                     <p className="text-xs text-center text-amber-800">
                       ✅ シェア文をコピーしました。Instagramで貼り付けて投稿してください
                     </p>
