@@ -41,7 +41,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // Gemini でプラットフォーム別シェア文を生成する
+  // プラットフォーム別シェア文を生成する
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true)
     setGenerateError(null)
@@ -145,7 +145,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-stone-100">
           <div>
             <p className="text-base font-bold text-stone-800">SNSでシェア</p>
-            <p className="text-xs text-stone-500 mt-0.5">Geminiがシェア文を自動生成します</p>
+            <p className="text-xs text-stone-500 mt-0.5">投稿内容からシェア文を自動生成します</p>
           </div>
           <button
             onClick={onClose}
@@ -217,7 +217,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                 {isGenerating ? (
                   <>
                     <span className="animate-spin">⟳</span>
-                    <span>Gemini が生成中...</span>
+                    <span>生成中...</span>
                   </>
                 ) : (
                   <>
