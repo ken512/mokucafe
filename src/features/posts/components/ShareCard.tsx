@@ -3,14 +3,11 @@ import { Post } from "../types"
 
 type Props = {
   post: Post
-  orientation: "portrait" | "landscape"
 }
 
-// html2canvas でキャプチャするシェアカード
+// html2canvas でキャプチャするシェアカード（縦固定）
 // 外部フォント・外部画像は CORS 問題を避けるため使用しない
-const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref) => {
-  const isPortrait = orientation === "portrait"
-
+const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
   // 日時フォーマット
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -24,11 +21,11 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
     <div
       ref={ref}
       style={{
-        width: isPortrait ? 360 : 560,
-        height: isPortrait ? 480 : 320,
+        width: 360,
+        height: 480,
         backgroundColor: "#fafaf9",
         borderRadius: 20,
-        padding: isPortrait ? 32 : 28,
+        padding: 32,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -39,7 +36,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
         boxSizing: "border-box",
       }}
     >
-      {/* 背景装飾（コーヒーカップ風グラデーション） */}
+      {/* 背景装飾 */}
       <div style={{
         position: "absolute",
         top: -40,
@@ -60,7 +57,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
       }} />
 
       {/* メインコンテンツ */}
-      <div style={{ display: "flex", flexDirection: "column", gap: isPortrait ? 12 : 10, flex: 1 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
         {/* アプリ名 */}
         <p style={{ fontSize: 13, color: "#92400e", fontWeight: 700, margin: 0 }}>
           ☕ もくカフェ
@@ -68,7 +65,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
 
         {/* カフェ名 */}
         <p style={{
-          fontSize: isPortrait ? 22 : 18,
+          fontSize: 22,
           fontWeight: 800,
           color: "#1c1917",
           margin: 0,
@@ -82,7 +79,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
         </p>
 
         {/* 日時 */}
-        <p style={{ fontSize: isPortrait ? 14 : 13, color: "#57534e", margin: 0, fontWeight: 600 }}>
+        <p style={{ fontSize: 14, color: "#57534e", margin: 0, fontWeight: 600 }}>
           📅 {dateStr}{endStr}
         </p>
 
@@ -130,7 +127,6 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
 
       {/* ホスト */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-        {/* アバター画像があれば表示、なければ頭文字 */}
         {post.host.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
-type Orientation = "portrait" | "landscape"
 type Platform = "x" | "threads" | "instagram"
 type GeneratedTexts = { x: string; threads: string; instagram: string }
 
@@ -23,7 +22,6 @@ type Props = {
 
 // SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
 const ShareModal = ({ post, userSns, onClose }: Props) => {
-  const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
@@ -153,54 +151,25 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         </div>
 
         <div className="p-5 flex flex-col gap-5">
-          {/* シェアカード + 縦横トグル */}
-          <div className="flex flex-col items-center gap-3">
-            {/* 縦横トグル */}
-            <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
-              {(["portrait", "landscape"] as Orientation[]).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setOrientation(o)}
-                  className={[
-                    "px-4 py-1.5 transition-colors",
-                    orientation === o
-                      ? "bg-stone-800 text-white"
-                      : "text-stone-600 hover:bg-stone-50",
-                  ].join(" ")}
-                >
-                  {o === "portrait" ? "縦" : "横"}
-                </button>
-              ))}
+          {/* シェアカードプレビュー */}
+          <div className="flex flex-col items-center gap-2">
+            <div style={{
+              width: 360 * 0.75,
+              height: 480 * 0.75,
+              overflow: "hidden",
+              position: "relative",
+              margin: "0 auto",
+            }}>
+              <div style={{
+                transform: "scale(0.75)",
+                transformOrigin: "top left",
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }}>
+                <ShareCard ref={cardRef} post={post} />
+              </div>
             </div>
-
-            {/* カードプレビュー（スケールダウンして表示） */}
-            {/* カード実寸 × スケールで外側サイズを固定し、クリップを防ぐ */}
-            {(() => {
-              // モーダル内側幅（max-w-md 448px - p-5×2 40px）に収まるスケールを算出する
-              const cardW = orientation === "portrait" ? 360 : 560
-              const cardH = orientation === "portrait" ? 480 : 320
-              const scale = Math.min(0.75, 400 / cardW)
-              return (
-                <div style={{
-                  width: cardW * scale,
-                  height: cardH * scale,
-                  overflow: "hidden",
-                  position: "relative",
-                  margin: "0 auto",
-                }}>
-                  <div style={{
-                    transform: `scale(${scale})`,
-                    transformOrigin: "top left",
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                  }}>
-                    <ShareCard ref={cardRef} post={post} orientation={orientation} />
-                  </div>
-                </div>
-              )
-            })()}
             <p className="text-xs text-stone-400">画像を長押しして保存できます</p>
           </div>
 
