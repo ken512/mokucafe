@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
@@ -21,7 +21,7 @@ type Props = {
   onClose: () => void
 }
 
-// SNS シェアモーダル（AI文章生成 + シェアカード画像 + プラットフォーム別投稿）
+// SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
 const ShareModal = ({ post, userSns, onClose }: Props) => {
   const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
@@ -29,7 +29,6 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
   )
   const [texts, setTexts] = useState<GeneratedTexts | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generateError, setGenerateError] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -41,37 +40,37 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // プラットフォーム別シェア文を生成する
-  const handleGenerate = useCallback(async () => {
-    setIsGenerating(true)
-    setGenerateError(null)
-    try {
-      // 認証トークンを取得して Authorization ヘッダーに付与する
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch("/api/ai/generate-share", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token ?? ""}`,
-        },
-        body: JSON.stringify({
-          cafeName: post.cafeName,
-          cafeAddress: post.cafeAddress,
-          date: post.date,
-          endDate: post.endDate,
-          description: post.description,
-          tags: post.tags,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "生成に失敗しました")
-      setTexts(data)
-    } catch (e) {
-      setGenerateError(e instanceof Error ? e.message : "生成に失敗しました")
-    } finally {
-      setIsGenerating(false)
+  // モーダルを開いたときにシェア文を自動生成する
+  useEffect(() => {
+    const generate = async () => {
+      setIsGenerating(true)
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch("/api/ai/generate-share", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({
+            cafeName: post.cafeName,
+            cafeAddress: post.cafeAddress,
+            date: post.date,
+            endDate: post.endDate,
+            description: post.description,
+            tags: post.tags,
+          }),
+        })
+        const data = await res.json()
+        if (res.ok) setTexts(data)
+      } catch {
+        // 生成失敗時はテキストなしのまま続行
+      } finally {
+        setIsGenerating(false)
+      }
     }
+    generate()
   }, [post])
 
   // シェアカードを画像として取得し Blob を返す
@@ -110,7 +109,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
-      // Instagram はWeb Share API 経由でネイティブシェートを開く
+      // Instagram はWeb Share API 経由でネイティブシェアを開く
       const blob = await captureCard()
       if (blob && navigator.canShare?.({ files: [new File([blob], "mokucafe.png", { type: "image/png" })] })) {
         await navigator.share({
@@ -143,10 +142,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
       >
         {/* ヘッダー */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-stone-100">
-          <div>
-            <p className="text-base font-bold text-stone-800">SNSでシェア</p>
-            <p className="text-xs text-stone-500 mt-0.5">投稿内容からシェア文を自動生成します</p>
-          </div>
+          <p className="text-base font-bold text-stone-800">SNSでシェア</p>
           <button
             onClick={onClose}
             className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none"
@@ -208,31 +204,10 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                 ))}
               </div>
 
-              {/* AI生成ボタン */}
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-sm font-medium text-amber-900 hover:bg-amber-100 transition-colors disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <>
-                    <span className="animate-spin">⟳</span>
-                    <span>生成中...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>✨</span>
-                    <span>{texts ? "再生成する" : "AIでシェア文を生成する"}</span>
-                  </>
-                )}
-              </button>
-
-              {generateError && (
-                <p className="text-xs text-red-500">{generateError}</p>
-              )}
-
-              {/* 生成されたテキスト（編集可能） */}
-              {texts && (
+              {/* シェア文（編集可能） */}
+              {isGenerating ? (
+                <p className="text-xs text-stone-400 text-center py-2">シェア文を生成中...</p>
+              ) : texts && (
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-medium text-stone-600">
                     シェア文（編集できます）
