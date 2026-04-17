@@ -24,11 +24,11 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
     <div
       ref={ref}
       style={{
-        width: isPortrait ? 360 : 540,
-        height: isPortrait ? 480 : 300,
+        width: isPortrait ? 360 : 560,
+        height: isPortrait ? 480 : 320,
         backgroundColor: "#fafaf9",
         borderRadius: 20,
-        padding: 32,
+        padding: isPortrait ? 32 : 28,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -36,6 +36,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
         position: "relative",
         overflow: "hidden",
         border: "1px solid #e7e5e4",
+        boxSizing: "border-box",
       }}
     >
       {/* 背景装飾（コーヒーカップ風グラデーション） */}
@@ -59,7 +60,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
       }} />
 
       {/* メインコンテンツ */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: isPortrait ? 12 : 10, flex: 1 }}>
         {/* アプリ名 */}
         <p style={{ fontSize: 13, color: "#92400e", fontWeight: 700, margin: 0 }}>
           ☕ もくカフェ
@@ -67,7 +68,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
 
         {/* カフェ名 */}
         <p style={{
-          fontSize: isPortrait ? 22 : 20,
+          fontSize: isPortrait ? 22 : 18,
           fontWeight: 800,
           color: "#1c1917",
           margin: 0,
@@ -81,20 +82,28 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
         </p>
 
         {/* 日時 */}
-        <p style={{ fontSize: 14, color: "#57534e", margin: 0, fontWeight: 600 }}>
+        <p style={{ fontSize: isPortrait ? 14 : 13, color: "#57534e", margin: 0, fontWeight: 600 }}>
           📅 {dateStr}{endStr}
         </p>
 
         {/* 住所 */}
         {post.cafeAddress && (
-          <p style={{ fontSize: 12, color: "#78716c", margin: 0 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#78716c",
+            margin: 0,
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}>
             📍 {post.cafeAddress}
           </p>
         )}
 
         {/* タグ */}
         {post.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {post.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
@@ -120,22 +129,38 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
       </div>
 
       {/* ホスト */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          backgroundColor: "#78350f",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontWeight: 700,
-          fontSize: 13,
-          flexShrink: 0,
-        }}>
-          {post.host.name?.charAt(0) ?? "?"}
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+        {/* アバター画像があれば表示、なければ頭文字 */}
+        {post.host.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={post.host.avatarUrl}
+            alt={post.host.name ?? ""}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              objectFit: "cover",
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            backgroundColor: "#78350f",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontWeight: 700,
+            fontSize: 13,
+            flexShrink: 0,
+          }}>
+            {post.host.name?.charAt(0) ?? "?"}
+          </div>
+        )}
         <p style={{ fontSize: 13, color: "#1c1917", margin: 0, fontWeight: 600 }}>
           {post.host.name}
         </p>
