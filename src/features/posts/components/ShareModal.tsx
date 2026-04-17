@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
@@ -27,8 +27,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
   )
   const [texts, setTexts] = useState<GeneratedTexts | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [isCopied, setIsCopied] = useState(false)
+const [isCopied, setIsCopied] = useState(false)
   // Instagram PC シェア時にテキストコピー済みを通知する
   const [isInstagramTextCopied, setIsInstagramTextCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -73,26 +72,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     generate()
   }, [post])
 
-  // シェアカードを画像として取得し Blob を返す
-  const captureCard = useCallback(async (): Promise<Blob | null> => {
-    if (!cardRef.current) return null
-    setIsCapturing(true)
-    try {
-      const { default: html2canvas } = await import("html2canvas")
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: null,
-      })
-      return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
-    } catch {
-      return null
-    } finally {
-      setIsCapturing(false)
-    }
-  }, [])
-
-  // X / Threads へシェア（インテント URL を開く）
+// X / Threads へシェア（インテント URL を開く）
   const handleShare = async (platform: Platform) => {
     const text = texts?.[platform] ?? ""
     const postUrl = `${window.location.origin}/posts/${post.id}`
@@ -109,21 +89,11 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
-      // スマホ・PC 共通: 先にシェア文をクリップボードにコピーする
+      // シェア文をコピーして Instagram を開く（スマホ・PC 共通）
       await navigator.clipboard.writeText(fullText)
       setIsInstagramTextCopied(true)
       setTimeout(() => setIsInstagramTextCopied(false), 3000)
-
-      const blob = await captureCard()
-      const file = blob ? new File([blob], "mokucafe.png", { type: "image/png" }) : null
-
-      // スマホ: Web Share API 対応なら共有シートを開く（Instagram アプリに渡せる）
-      if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text: fullText })
-      } else {
-        // PC: Instagram ウェブを開く（コピー済みテキストを貼り付けて投稿）
-        window.open("https://www.instagram.com/", "_blank")
-      }
+      window.open("https://www.instagram.com/", "_blank")
     }
   }
 
@@ -225,14 +195,11 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                 <div className="flex flex-col gap-1.5">
                   <button
                     onClick={() => handleShare(activePlatform)}
-                    disabled={isCapturing}
-                    className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
                   >
-                    {isCapturing ? "準備中..." : (
-                      activePlatform === "x" ? "𝕏 でポストする" :
-                      activePlatform === "threads" ? "🧵 Threads に投稿する" :
-                      "📸 Instagram にシェアする"
-                    )}
+                    {activePlatform === "x" ? "𝕏 でポストする" :
+                     activePlatform === "threads" ? "🧵 Threads に投稿する" :
+                     "📸 Instagram にシェアする"}
                   </button>
                   {/* Instagram シェア時にコピー済みを通知する（スマホ・PC 共通） */}
                   {isInstagramTextCopied && activePlatform === "instagram" && (
