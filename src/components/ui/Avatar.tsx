@@ -11,12 +11,9 @@ const sizeClass = {
   md: "w-8 h-8 text-sm",
 }
 
-const sizePx = {
-  sm: 24,
-  md: 32,
-}
+const sizePx = { sm: 24, md: 32 }
 
-// ユーザーアイコン（avatarUrlがあれば画像、なければ頭文字を表示）
+// ユーザーアイコン（avatarUrl があれば画像、なければ名前の頭文字を表示）
 const Avatar = ({ name, avatarUrl, size = "sm" }: Props) => {
   return (
     <div className={`${sizeClass[size]} rounded-full overflow-hidden bg-amber-100 shrink-0`}>

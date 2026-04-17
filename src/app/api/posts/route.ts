@@ -8,15 +8,42 @@ export const dynamic = "force-dynamic"
 
 const LIMIT = 10
 
-// GET /api/posts?cursor=<id>&limit=10
+// 作業終了から1時間以上経過した投稿を非同期で削除する（レスポンスをブロックしない）
+const cleanupExpiredPosts = () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+  prisma.post.deleteMany({
+    where: { endDate: { lt: oneHourAgo } },
+  }).catch((e) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
+}
+
+// GET /api/posts?cursor=<id>&limit=10&q=<検索>&tag=<タグ>
 export const GET = async (request: NextRequest) => {
+  // 一覧取得のついでに期限切れ投稿をバックグラウンドで削除する
+  cleanupExpiredPosts()
+
   const { searchParams } = request.nextUrl
   const cursor = searchParams.get("cursor")
+  // カフェ名・説明文のあいまい検索キーワード
+  const q = searchParams.get("q")?.trim() || null
+  // タグフィルター（完全一致）
+  const tag = searchParams.get("tag")?.trim() || null
 
   try {
     // limit + 1 件取得して「次のページがあるか」を判定する
     const posts = await prisma.post.findMany({
-      where: { status: "OPEN" },
+      where: {
+        status: "OPEN",
+        ...(q
+          ? {
+              OR: [
+                { cafeName: { contains: q, mode: "insensitive" } },
+                { cafeAddress: { contains: q, mode: "insensitive" } },
+                { description: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+        ...(tag ? { tags: { has: tag } } : {}),
+      },
       take: LIMIT + 1,
       ...(cursor
         ? { cursor: { id: parseInt(cursor) }, skip: 1 }
@@ -37,6 +64,7 @@ export const GET = async (request: NextRequest) => {
         id: post.id,
         cafeName: post.cafeName,
         cafeAddress: post.cafeAddress,
+        cafePlaceId: post.cafePlaceId,
         date: post.date.toISOString(),
         endDate: post.endDate?.toISOString() ?? null,
         capacity: post.capacity,
@@ -73,7 +101,7 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ errors: validation.errors }, { status: 400 })
   }
 
-  const { cafeName, cafeAddress, date, endDate, capacity, description, tags, mediaUrls } = validation.data
+  const { cafeName, cafeAddress, cafePlaceId, date, endDate, capacity, description, tags, mediaUrls } = validation.data
 
   try {
     const post = await prisma.post.create({
@@ -81,6 +109,7 @@ export const POST = async (request: NextRequest) => {
         userId: auth.userId,
         cafeName,
         cafeAddress,
+        cafePlaceId,
         date: new Date(date),
         endDate: new Date(endDate),
         capacity,
@@ -100,6 +129,7 @@ export const POST = async (request: NextRequest) => {
           id: post.id,
           cafeName: post.cafeName,
           cafeAddress: post.cafeAddress,
+          cafePlaceId: post.cafePlaceId,
           date: post.date.toISOString(),
           endDate: post.endDate?.toISOString() ?? null,
           capacity: post.capacity,

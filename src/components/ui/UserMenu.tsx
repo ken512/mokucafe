@@ -75,6 +75,14 @@ const UserMenu = ({ name, avatarUrl }: Props) => {
           </div>
 
           <Link
+            href="/posts"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            📋 募集一覧
+          </Link>
+
+          <Link
             href="/posts/new"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"

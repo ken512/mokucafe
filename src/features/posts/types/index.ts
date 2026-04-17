@@ -2,6 +2,7 @@
 export type CreatePostRequest = {
   cafeName: string
   cafeAddress?: string
+  cafePlaceId?: string // Google Places の placeId（任意）
   date: string    // 作業開始日時（ISO8601）
   endDate: string // 作業終了日時（ISO8601）
   capacity: number
@@ -20,6 +21,7 @@ export type Post = {
   id: number
   cafeName: string
   cafeAddress: string | null
+  cafePlaceId: string | null
   date: string    // 作業開始日時（ISO8601）
   endDate: string | null // 作業終了日時（ISO8601）
   capacity: number
@@ -39,6 +41,7 @@ export type Post = {
 export type UpdatePostRequest = {
   cafeName?: string
   cafeAddress?: string
+  cafePlaceId?: string
   date?: string
   endDate?: string
   capacity?: number

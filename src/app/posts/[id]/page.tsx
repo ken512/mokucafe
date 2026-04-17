@@ -34,10 +34,19 @@ const PostDetailPage = async ({ params }: Props) => {
   // ログイン中ユーザーのSupabase UUIDと投稿者のIDが一致する場合に投稿者と判定する
   const isOwner = isLoggedIn && user?.id === postRaw.user.supabaseUserId
 
+  // オーナーの SNS リンクをシェアボタン表示に使う
+  const userSns = isOwner
+    ? await prisma.user.findUnique({
+        where: { supabaseUserId: user!.id },
+        select: { xUrl: true, threadsUrl: true, instagramUrl: true },
+      })
+    : null
+
   const post: Post = {
     id: postRaw.id,
     cafeName: postRaw.cafeName,
     cafeAddress: postRaw.cafeAddress,
+    cafePlaceId: postRaw.cafePlaceId,
     date: postRaw.date.toISOString(),
     endDate: postRaw.endDate?.toISOString() ?? null,
     capacity: postRaw.capacity,
@@ -62,7 +71,12 @@ const PostDetailPage = async ({ params }: Props) => {
           ☕ ← もどる
         </Link>
 
-        <PostDetailPageClient initialPost={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+        <PostDetailPageClient
+          initialPost={post}
+          isLoggedIn={isLoggedIn}
+          isOwner={isOwner}
+          userSns={userSns ?? undefined}
+        />
       </main>
     </div>
   )

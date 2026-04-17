@@ -32,6 +32,7 @@ model Post {
   userId       Int
   cafeName     String        // カフェ名
   cafeAddress  String?       // カフェの住所
+  cafePlaceId  String?       // Google Places の placeId（地図の正確なピン留めに使用）
   date         DateTime      // 作業開始日時
   endDate      DateTime?     // 作業終了日時（nullの場合は終了時間なし）
   capacity     Int           // 募集人数
@@ -45,6 +46,9 @@ model Post {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications Application[]
 
+  // 一覧取得（status + 降順）・テキスト検索（cafeName）用インデックス
+  @@index([status, createdAt(sort: Desc)])
+  @@index([cafeName])
   @@map("posts")
 }
 
