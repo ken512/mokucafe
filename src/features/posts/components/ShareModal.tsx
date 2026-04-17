@@ -29,6 +29,8 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  // Instagram PC シェア時にテキストコピー済みを通知する
+  const [isInstagramTextCopied, setIsInstagramTextCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   // 利用可能なプラットフォーム（SNS URL が設定済みのもの）
@@ -107,18 +109,18 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
-      // Instagram はWeb Share API 経由でネイティブシェアを開く
       const blob = await captureCard()
-      if (blob && navigator.canShare?.({ files: [new File([blob], "mokucafe.png", { type: "image/png" })] })) {
-        await navigator.share({
-          files: [new File([blob], "mokucafe.png", { type: "image/png" })],
-          text: fullText,
-        })
+      const file = blob ? new File([blob], "mokucafe.png", { type: "image/png" }) : null
+
+      // スマホかつ Web Share API（ファイル共有）対応の場合はネイティブ共有シートを使う
+      if (file && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: fullText })
       } else {
-        // Web Share API 非対応環境ではURLをコピー
+        // PC またはフォールバック: テキストをコピーして Instagram を開く
         await navigator.clipboard.writeText(fullText)
-        setIsCopied(true)
-        setTimeout(() => setIsCopied(false), 2000)
+        setIsInstagramTextCopied(true)
+        setTimeout(() => setIsInstagramTextCopied(false), 3000)
+        window.open("https://www.instagram.com/", "_blank")
       }
     }
   }
@@ -218,17 +220,25 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
 
               {/* シェアボタン */}
               {texts && (
-                <button
-                  onClick={() => handleShare(activePlatform)}
-                  disabled={isCapturing}
-                  className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
-                >
-                  {isCapturing ? "準備中..." : (
-                    activePlatform === "x" ? "𝕏 でポストする" :
-                    activePlatform === "threads" ? "🧵 Threads に投稿する" :
-                    "📸 Instagram にシェアする"
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    onClick={() => handleShare(activePlatform)}
+                    disabled={isCapturing}
+                    className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                  >
+                    {isCapturing ? "準備中..." : (
+                      activePlatform === "x" ? "𝕏 でポストする" :
+                      activePlatform === "threads" ? "🧵 Threads に投稿する" :
+                      "📸 Instagram にシェアする"
+                    )}
+                  </button>
+                  {/* PC からの Instagram シェア時にコピー済みを通知する */}
+                  {isInstagramTextCopied && (
+                    <p className="text-xs text-center text-amber-800">
+                      ✅ シェア文をコピーしました。Instagramで貼り付けて投稿してください
+                    </p>
                   )}
-                </button>
+                </div>
               )}
             </div>
           ) : (
