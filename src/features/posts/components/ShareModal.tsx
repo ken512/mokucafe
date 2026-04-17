@@ -175,8 +175,21 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
             </div>
 
             {/* カードプレビュー（スケールダウンして表示） */}
-            <div className="overflow-hidden flex justify-center">
-              <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
+            {/* カード実寸 × スケールで外側サイズを固定し、クリップを防ぐ */}
+            <div style={{
+              width: (orientation === "portrait" ? 360 : 560) * 0.75,
+              height: (orientation === "portrait" ? 480 : 320) * 0.75,
+              overflow: "hidden",
+              position: "relative",
+              margin: "0 auto",
+            }}>
+              <div style={{
+                transform: "scale(0.75)",
+                transformOrigin: "top left",
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }}>
                 <ShareCard ref={cardRef} post={post} orientation={orientation} />
               </div>
             </div>
