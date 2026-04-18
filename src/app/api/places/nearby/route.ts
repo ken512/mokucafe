@@ -48,7 +48,7 @@ export const POST = async (request: NextRequest) => {
         },
         body: JSON.stringify({
           includedTypes: ["cafe", "coffee_shop"],
-          maxResultCount: 10,
+          maxResultCount: 20,
           languageCode: "ja",
           locationRestriction: {
             circle: {
