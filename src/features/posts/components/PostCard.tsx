@@ -19,6 +19,12 @@ const applicationStatusConfig: Record<ApplicationStatus, { text: string; icon: s
   REJECTED: { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
 }
 
+// 募集ステータスのバッジ表示設定（申請済み投稿にのみ表示）
+const recruitStatusConfig = {
+  open:   { text: "募集中",   className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  closed: { text: "締め切り", className: "bg-stone-100 text-stone-500 border border-stone-200" },
+}
+
 type Props = {
   post: Post
   myApplicationStatus?: ApplicationStatus
@@ -114,10 +120,23 @@ const PostCard = ({ post, myApplicationStatus }: Props) => {
             <span className="text-sm text-stone-600">{post.host.name}</span>
           </div>
           {myApplicationStatus && (
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 ${applicationStatusConfig[myApplicationStatus].className}`}>
-              <span>{applicationStatusConfig[myApplicationStatus].icon}</span>
-              <span>{applicationStatusConfig[myApplicationStatus].text}</span>
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* 募集ステータス（申請済み投稿のみ表示） */}
+              {(() => {
+                const isOpen = post.status === "OPEN" && remainingSlots > 0
+                const cfg = isOpen ? recruitStatusConfig.open : recruitStatusConfig.closed
+                return (
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${cfg.className}`}>
+                    {cfg.text}
+                  </span>
+                )
+              })()}
+              {/* 自分の申請ステータス */}
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${applicationStatusConfig[myApplicationStatus].className}`}>
+                <span>{applicationStatusConfig[myApplicationStatus].icon}</span>
+                <span>{applicationStatusConfig[myApplicationStatus].text}</span>
+              </span>
+            </div>
           )}
         </div>
       </div>
