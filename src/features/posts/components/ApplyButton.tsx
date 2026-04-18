@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { ApplicationStatus } from "@/features/applications/types"
+import Dialog from "@/components/ui/Dialog"
 
 type FetchStatus = "loading" | "idle" | "submitting" | "error"
 
 type Props = {
   postId: number
   isClosed: boolean
+  isWorkFinished: boolean // 作業終了済みかどうか（終了後は参加確定不可）
 }
 
 // 申請ステータスのバッジ表示設定（APPROVED は参加確定ボタンを別途表示するため除外）
@@ -31,13 +33,14 @@ const statusBadgeConfig: Partial<Record<ApplicationStatus, { text: string; descr
 }
 
 // 参加申請ボタン（自分の申請ステータス表示付き）
-const ApplyButton = ({ postId, isClosed }: Props) => {
+const ApplyButton = ({ postId, isClosed, isWorkFinished }: Props) => {
   const [myStatus, setMyStatus] = useState<ApplicationStatus | null>(null)
   const [myApplicationId, setMyApplicationId] = useState<number | null>(null)
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>("loading")
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showFinishedDialog, setShowFinishedDialog] = useState(false)
 
   // マウント時に自分の申請ステータスを取得する
   useEffect(() => {
@@ -89,6 +92,11 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
   // 参加確定する（APPROVED → ATTENDING）
   const confirmAttendance = async () => {
     if (!myApplicationId) return
+    // 作業終了後は参加確定不可
+    if (isWorkFinished) {
+      setShowFinishedDialog(true)
+      return
+    }
     setFetchStatus("submitting")
     setErrorMessage(null)
     try {
@@ -128,18 +136,27 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
   // 承認済み → 参加確定ボタンを表示
   if (myStatus === "APPROVED") {
     return (
-      <div className="flex flex-col gap-2 p-4 bg-green-50 border border-green-200 rounded-2xl">
-        <p className="text-sm font-bold text-green-800">✅ 参加が承認されました！</p>
-        <p className="text-xs text-green-700">参加が決まったら「参加する」を押して確定してください。</p>
-        {errorMessage && <p className="text-xs text-red-500">{errorMessage}</p>}
-        <button
-          onClick={confirmAttendance}
-          disabled={fetchStatus === "submitting"}
-          className="w-full py-2.5 rounded-xl bg-green-700 hover:bg-green-600 text-white text-sm font-bold transition-colors disabled:opacity-50"
-        >
-          {fetchStatus === "submitting" ? "確定中..." : "参加する"}
-        </button>
-      </div>
+      <>
+        <Dialog
+          isOpen={showFinishedDialog}
+          onClose={() => setShowFinishedDialog(false)}
+          variant="error"
+          title="作業は終了しています"
+          message="この募集の作業時間はすでに終了しているため、参加確定できません。"
+        />
+        <div className="flex flex-col gap-2 p-4 bg-green-50 border border-green-200 rounded-2xl">
+          <p className="text-sm font-bold text-green-800">✅ 参加が承認されました！</p>
+          <p className="text-xs text-green-700">参加が決まったら「参加する」を押して確定してください。</p>
+          {errorMessage && <p className="text-xs text-red-500">{errorMessage}</p>}
+          <button
+            onClick={confirmAttendance}
+            disabled={fetchStatus === "submitting"}
+            className="w-full py-2.5 rounded-xl bg-green-700 hover:bg-green-600 text-white text-sm font-bold transition-colors disabled:opacity-50"
+          >
+            {fetchStatus === "submitting" ? "確定中..." : "参加する"}
+          </button>
+        </div>
+      </>
     )
   }
 
