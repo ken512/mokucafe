@@ -14,16 +14,25 @@ const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
 
 // 申請ステータスのバッジ表示設定（PENDING / REJECTED はそのまま表示）
 const applicationStatusConfig: Record<ApplicationStatus, { text: string; icon: string; className: string }> = {
-  PENDING:  { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
-  APPROVED: { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
-  REJECTED: { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
+  PENDING:   { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
+  APPROVED:  { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
+  ATTENDING: { text: "参加確定", icon: "🟢", className: "bg-green-100 text-green-800 border border-green-300" },
+  REJECTED:  { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
 }
 
-// APPROVED × workStatus を組み合わせた参加状態バッジ
-const approvedBadgeConfig: Record<WorkStatus | "none", { text: string; className: string }> = {
+// ATTENDING × workStatus を組み合わせた参加状態バッジ
+const attendingBadgeConfig: Record<WorkStatus | "none", { text: string; className: string }> = {
   ongoing:  { text: "🟢 参加中",   className: "bg-green-100 text-green-800 border border-green-300 font-bold" },
   upcoming: { text: "📅 参加予定", className: "bg-blue-50 text-blue-700 border border-blue-200" },
   finished: { text: "✓ 参加済み", className: "bg-stone-100 text-stone-500 border border-stone-200" },
+  none:     { text: "🟢 参加確定", className: "bg-green-100 text-green-800 border border-green-300" },
+}
+
+// APPROVED（未確定）× workStatus バッジ
+const approvedBadgeConfig: Record<WorkStatus | "none", { text: string; className: string }> = {
+  ongoing:  { text: "📅 参加予定", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  upcoming: { text: "📅 参加予定", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  finished: { text: "✅ 承認済み", className: "bg-green-50 text-green-800 border border-green-200" },
   none:     { text: "✅ 承認済み", className: "bg-green-50 text-green-800 border border-green-200" },
 }
 
@@ -129,8 +138,13 @@ const PostCard = ({ post, myApplicationStatus }: Props) => {
           </div>
           {myApplicationStatus && (
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* APPROVED: workStatus と組み合わせた参加状態バッジ */}
-              {myApplicationStatus === "APPROVED" ? (
+              {/* ATTENDING: 参加確定 × workStatus の組み合わせバッジ */}
+              {myApplicationStatus === "ATTENDING" ? (
+                <span className={`text-xs px-2.5 py-1 rounded-full ${attendingBadgeConfig[workStatus ?? "none"].className}`}>
+                  {attendingBadgeConfig[workStatus ?? "none"].text}
+                </span>
+              ) : myApplicationStatus === "APPROVED" ? (
+                /* APPROVED（未確定）: workStatus と組み合わせた参加予定バッジ */
                 <span className={`text-xs px-2.5 py-1 rounded-full ${approvedBadgeConfig[workStatus ?? "none"].className}`}>
                   {approvedBadgeConfig[workStatus ?? "none"].text}
                 </span>

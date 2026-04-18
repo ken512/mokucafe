@@ -11,9 +11,10 @@ type Props = {
 
 // 申請ステータスの表示設定
 const statusLabel: Record<Application["status"], { text: string; icon: string; className: string }> = {
-  PENDING:  { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
-  APPROVED: { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
-  REJECTED: { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
+  PENDING:   { text: "申請中",   icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
+  APPROVED:  { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
+  ATTENDING: { text: "参加確定", icon: "🟢", className: "bg-green-100 text-green-800 border border-green-300" },
+  REJECTED:  { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
 }
 
 // 申請カード（コンパクト表示）

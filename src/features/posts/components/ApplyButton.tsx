@@ -11,16 +11,16 @@ type Props = {
   isClosed: boolean
 }
 
-// 申請ステータスの表示設定
-const statusConfig: Record<ApplicationStatus, { text: string; description: string; className: string }> = {
-  PENDING:  {
+// 申請ステータスのバッジ表示設定（APPROVED は参加確定ボタンを別途表示するため除外）
+const statusBadgeConfig: Partial<Record<ApplicationStatus, { text: string; description: string; className: string }>> = {
+  PENDING: {
     text: "申請中",
     description: "オーナーの承認をお待ちください",
     className: "bg-amber-50 border border-amber-200 text-amber-800",
   },
-  APPROVED: {
-    text: "承認済み",
-    description: "参加が承認されました！",
+  ATTENDING: {
+    text: "参加確定！",
+    description: "参加が確定されました。当日楽しみましょう！",
     className: "bg-green-50 border border-green-200 text-green-800",
   },
   REJECTED: {
@@ -33,6 +33,7 @@ const statusConfig: Record<ApplicationStatus, { text: string; description: strin
 // 参加申請ボタン（自分の申請ステータス表示付き）
 const ApplyButton = ({ postId, isClosed }: Props) => {
   const [myStatus, setMyStatus] = useState<ApplicationStatus | null>(null)
+  const [myApplicationId, setMyApplicationId] = useState<number | null>(null)
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>("loading")
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState("")
@@ -49,12 +50,14 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
       if (res.ok) {
         const data = await res.json()
         setMyStatus(data.application?.status ?? null)
+        setMyApplicationId(data.application?.id ?? null)
       }
       setFetchStatus("idle")
     }
     fetchMyApplication()
   }, [postId])
 
+  // 参加申請する
   const apply = async () => {
     setFetchStatus("submitting")
     setErrorMessage(null)
@@ -83,6 +86,36 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
     }
   }
 
+  // 参加確定する（APPROVED → ATTENDING）
+  const confirmAttendance = async () => {
+    if (!myApplicationId) return
+    setFetchStatus("submitting")
+    setErrorMessage(null)
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/applications/${myApplicationId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ status: "ATTENDING" }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setErrorMessage(data.error ?? "参加確定に失敗しました")
+        setFetchStatus("error")
+        return
+      }
+      setMyStatus("ATTENDING")
+      setFetchStatus("idle")
+    } catch {
+      setErrorMessage("参加確定に失敗しました")
+      setFetchStatus("error")
+    }
+  }
+
   // ローディング中
   if (fetchStatus === "loading") {
     return (
@@ -92,9 +125,27 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
     )
   }
 
-  // 申請済みの場合はステータスバッジを表示
-  if (myStatus) {
-    const config = statusConfig[myStatus]
+  // 承認済み → 参加確定ボタンを表示
+  if (myStatus === "APPROVED") {
+    return (
+      <div className="flex flex-col gap-2 p-4 bg-green-50 border border-green-200 rounded-2xl">
+        <p className="text-sm font-bold text-green-800">✅ 参加が承認されました！</p>
+        <p className="text-xs text-green-700">参加が決まったら「参加する」を押して確定してください。</p>
+        {errorMessage && <p className="text-xs text-red-500">{errorMessage}</p>}
+        <button
+          onClick={confirmAttendance}
+          disabled={fetchStatus === "submitting"}
+          className="w-full py-2.5 rounded-xl bg-green-700 hover:bg-green-600 text-white text-sm font-bold transition-colors disabled:opacity-50"
+        >
+          {fetchStatus === "submitting" ? "確定中..." : "参加する"}
+        </button>
+      </div>
+    )
+  }
+
+  // その他の申請済みステータス（PENDING / ATTENDING / REJECTED）はバッジ表示
+  if (myStatus && statusBadgeConfig[myStatus]) {
+    const config = statusBadgeConfig[myStatus]!
     return (
       <div className={`w-full py-3 px-4 rounded-xl text-sm font-bold text-center ${config.className}`}>
         <p>{config.text}</p>

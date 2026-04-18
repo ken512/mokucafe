@@ -1,5 +1,5 @@
 // 申請ステータス
-export type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED"
+export type ApplicationStatus = "PENDING" | "APPROVED" | "ATTENDING" | "REJECTED"
 
 // 申請一覧の1件（オーナー向け）
 export type Application = {

@@ -77,7 +77,8 @@ enum PostStatus {
 }
 
 enum ApplicationStatus {
-  PENDING   // 申請中
-  APPROVED  // 承認済み
-  REJECTED  // 却下
+  PENDING    // 申請中
+  APPROVED   // 承認済み（参加未確定）
+  ATTENDING  // 参加確定（ユーザー自身が確認）
+  REJECTED   // 却下
 }
