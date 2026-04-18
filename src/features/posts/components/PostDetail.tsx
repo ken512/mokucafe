@@ -104,7 +104,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
       {/* 参加申請（投稿者本人には表示しない） */}
       {!isOwner && (
         isLoggedIn ? (
-          <ApplyButton postId={post.id} />
+          <ApplyButton postId={post.id} isClosed={post.status !== "OPEN" || remainingSlots === 0} />
         ) : (
           <div className="flex flex-col items-center gap-2">
             <ButtonLink href="/login" variant="primary" size="lg" fullWidth>

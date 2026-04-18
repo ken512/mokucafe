@@ -5,6 +5,7 @@ import PostDetail from "./PostDetail"
 import EditPostForm from "./EditPostForm"
 import ShareModal from "./ShareModal"
 import Dialog from "@/components/ui/Dialog"
+import ApplicationList from "@/features/applications/components/ApplicationList"
 import { Post } from "../types"
 
 type UserSns = {
@@ -87,6 +88,14 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
       )}
 
       <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+
+      {/* オーナー向け申請一覧 */}
+      {isOwner && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+          <p className="text-sm font-bold text-stone-800">参加申請一覧</p>
+          <ApplicationList postId={post.id} />
+        </div>
+      )}
     </div>
   )
 }
