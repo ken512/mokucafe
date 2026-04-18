@@ -6,7 +6,6 @@ import ButtonLink from "@/components/ui/ButtonLink"
 import CafeMap from "./CafeMap"
 import ApplyButton from "./ApplyButton"
 import MediaGallery from "./MediaGallery"
-import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
 import { useWorkStatus } from "../hooks/useWorkStatus"
 import { getStatusDisplay } from "../utils/postStatus"
@@ -115,12 +114,6 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
         )
       )}
 
-      {/* 削除ボタン（投稿者本人のみ表示） */}
-      {isOwner && (
-        <div className="flex justify-center pb-2">
-          <DeletePostButton postId={post.id} />
-        </div>
-      )}
     </div>
   )
 }
