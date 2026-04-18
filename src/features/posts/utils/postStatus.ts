@@ -4,8 +4,9 @@ export type WorkStatus =
   | "tomorrow"        // 明日
   | "this_week"       // 今週（2〜6日後）
   | "next_week"       // 来週（7〜13日後）
-  | "this_month"      // 今月（14〜30日後）
-  | "next_month_plus" // 来月以降（31日以上先）
+  | "this_month"      // 今月中（同じカレンダー月）
+  | "next_month"      // 来月
+  | "next_month_plus" // 再来月以降
   | "ongoing"         // 作業中
   | "finished"        // 終了
 
@@ -20,7 +21,8 @@ const STATUS_DISPLAY: Record<WorkStatus, WorkStatusDisplay> = {
   this_week:       { label: "📅 今週開催", badgeClass: "bg-amber-50 text-amber-800 border border-amber-200" },
   next_week:       { label: "🗓 来週開催", badgeClass: "bg-blue-50 text-blue-700 border border-blue-200" },
   this_month:      { label: "🗓 今月開催", badgeClass: "bg-stone-100 text-stone-600 border border-stone-200" },
-  next_month_plus: { label: "🗓 来月以降", badgeClass: "bg-stone-100 text-stone-500 border border-stone-200" },
+  next_month:      { label: "🗓 来月開催", badgeClass: "bg-stone-100 text-stone-500 border border-stone-200" },
+  next_month_plus: { label: "🗓 再来月以降", badgeClass: "bg-stone-100 text-stone-400 border border-stone-200" },
   ongoing:         { label: "🟢 作業中",   badgeClass: "bg-green-50 text-green-700 border border-green-200" },
   finished:        { label: "✓ 終了",      badgeClass: "bg-stone-100 text-stone-400 border border-stone-200" },
 }
@@ -52,7 +54,14 @@ export const calcWorkStatus = (
   if (diffDays === 1) return "tomorrow"
   if (diffDays <= 6)  return "this_week"
   if (diffDays <= 13) return "next_week"
-  if (diffDays <= 30) return "this_month"
+
+  // 14日以降はカレンダーの月で判定する（日数ベースだと月跨ぎで誤表示になるため）
+  const nowMonth  = now.getFullYear() * 12 + now.getMonth()
+  const startMonth = start.getFullYear() * 12 + start.getMonth()
+  const monthDiff = startMonth - nowMonth
+
+  if (monthDiff === 0) return "this_month"
+  if (monthDiff === 1) return "next_month"
   return "next_month_plus"
 }
 
