@@ -6,6 +6,7 @@ import EditPostForm from "./EditPostForm"
 import ShareModal from "./ShareModal"
 import Dialog from "@/components/ui/Dialog"
 import ApplicationList from "@/features/applications/components/ApplicationList"
+import ParticipantList from "@/features/applications/components/ParticipantList"
 import { Post } from "../types"
 
 type UserSns = {
@@ -88,6 +89,9 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
       )}
 
       <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+
+      {/* 承認済み参加者一覧（ログイン済みユーザー全員に表示） */}
+      {isLoggedIn && <ParticipantList postId={post.id} />}
 
       {/* オーナー向け申請一覧 */}
       {isOwner && (
