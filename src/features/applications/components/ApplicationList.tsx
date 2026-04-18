@@ -10,10 +10,10 @@ type Props = {
 }
 
 // 申請ステータスの表示設定
-const statusLabel: Record<Application["status"], { text: string; className: string }> = {
-  PENDING:  { text: "申請中",  className: "bg-amber-50 text-amber-800 border border-amber-200" },
-  APPROVED: { text: "承認済み", className: "bg-green-50 text-green-800 border border-green-200" },
-  REJECTED: { text: "却下",    className: "bg-stone-100 text-stone-500 border border-stone-200" },
+const statusLabel: Record<Application["status"], { text: string; icon: string; className: string }> = {
+  PENDING:  { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
+  APPROVED: { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
+  REJECTED: { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
 }
 
 // オーナー向け申請一覧・承認/却下コンポーネント
@@ -78,8 +78,9 @@ const ApplicationList = ({ postId }: Props) => {
               <Avatar name={app.user.name} avatarUrl={app.user.avatarUrl} size="sm" />
               <p className="text-sm font-medium text-stone-800">{app.user.name}</p>
             </div>
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusLabel[app.status].className}`}>
-              {statusLabel[app.status].text}
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${statusLabel[app.status].className}`}>
+              <span>{statusLabel[app.status].icon}</span>
+              <span>{statusLabel[app.status].text}</span>
             </span>
           </div>
 

@@ -1,24 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { ApplicationStatus } from "@/features/applications/types"
 
-type ApplyStatus = "idle" | "loading" | "applied" | "error"
+type FetchStatus = "loading" | "idle" | "submitting" | "error"
 
 type Props = {
   postId: number
   isClosed: boolean
 }
 
-// 参加申請ボタン（メッセージ入力付き）
+// 申請ステータスの表示設定
+const statusConfig: Record<ApplicationStatus, { text: string; description: string; className: string }> = {
+  PENDING:  {
+    text: "申請中",
+    description: "オーナーの承認をお待ちください",
+    className: "bg-amber-50 border border-amber-200 text-amber-800",
+  },
+  APPROVED: {
+    text: "承認済み",
+    description: "参加が承認されました！",
+    className: "bg-green-50 border border-green-200 text-green-800",
+  },
+  REJECTED: {
+    text: "却下",
+    description: "今回は参加できませんでした",
+    className: "bg-stone-100 border border-stone-200 text-stone-500",
+  },
+}
+
+// 参加申請ボタン（自分の申請ステータス表示付き）
 const ApplyButton = ({ postId, isClosed }: Props) => {
+  const [myStatus, setMyStatus] = useState<ApplicationStatus | null>(null)
+  const [fetchStatus, setFetchStatus] = useState<FetchStatus>("loading")
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState("")
-  const [status, setStatus] = useState<ApplyStatus>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // マウント時に自分の申請ステータスを取得する
+  useEffect(() => {
+    const fetchMyApplication = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/posts/${postId}/applications/me`, {
+        headers: { Authorization: `Bearer ${session?.access_token ?? ""}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMyStatus(data.application?.status ?? null)
+      }
+      setFetchStatus("idle")
+    }
+    fetchMyApplication()
+  }, [postId])
+
   const apply = async () => {
-    setStatus("loading")
+    setFetchStatus("submitting")
     setErrorMessage(null)
     try {
       const supabase = createClient()
@@ -34,14 +72,35 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
       const data = await res.json()
       if (!res.ok) {
         setErrorMessage(data.error ?? "申請に失敗しました")
-        setStatus("error")
+        setFetchStatus("error")
         return
       }
-      setStatus("applied")
+      setMyStatus("PENDING")
+      setFetchStatus("idle")
     } catch {
       setErrorMessage("申請に失敗しました")
-      setStatus("error")
+      setFetchStatus("error")
     }
+  }
+
+  // ローディング中
+  if (fetchStatus === "loading") {
+    return (
+      <div className="w-full py-3 rounded-xl bg-stone-100 text-stone-400 text-sm text-center animate-pulse">
+        読み込み中...
+      </div>
+    )
+  }
+
+  // 申請済みの場合はステータスバッジを表示
+  if (myStatus) {
+    const config = statusConfig[myStatus]
+    return (
+      <div className={`w-full py-3 px-4 rounded-xl text-sm font-bold text-center ${config.className}`}>
+        <p>{config.text}</p>
+        <p className="text-xs font-normal mt-0.5">{config.description}</p>
+      </div>
+    )
   }
 
   // 募集終了
@@ -49,15 +108,6 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
     return (
       <div className="w-full py-3 rounded-xl bg-stone-200 text-stone-500 text-sm font-bold text-center">
         受付終了
-      </div>
-    )
-  }
-
-  // 申請完了
-  if (status === "applied") {
-    return (
-      <div className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-bold text-center">
-        ✅ 申請しました！オーナーの承認をお待ちください
       </div>
     )
   }
@@ -99,10 +149,10 @@ const ApplyButton = ({ postId, isClosed }: Props) => {
         </button>
         <button
           onClick={apply}
-          disabled={status === "loading"}
+          disabled={fetchStatus === "submitting"}
           className="flex-1 py-2.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
         >
-          {status === "loading" ? "送信中..." : "申請する"}
+          {fetchStatus === "submitting" ? "送信中..." : "申請する"}
         </button>
       </div>
     </div>
