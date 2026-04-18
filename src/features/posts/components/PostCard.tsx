@@ -6,17 +6,25 @@ import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
 import { useWorkStatus } from "../hooks/useWorkStatus"
-import { getStatusDisplay } from "../utils/postStatus"
+import { getStatusDisplay, WorkStatus } from "../utils/postStatus"
 import { ApplicationStatus } from "@/features/applications/types"
 
 // URLが動画ファイルかどうかを判定する
 const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
 
-// 申請ステータスのバッジ表示設定
+// 申請ステータスのバッジ表示設定（PENDING / REJECTED はそのまま表示）
 const applicationStatusConfig: Record<ApplicationStatus, { text: string; icon: string; className: string }> = {
   PENDING:  { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
   APPROVED: { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
   REJECTED: { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
+}
+
+// APPROVED × workStatus を組み合わせた参加状態バッジ
+const approvedBadgeConfig: Record<WorkStatus | "none", { text: string; className: string }> = {
+  ongoing:  { text: "🟢 参加中",   className: "bg-green-100 text-green-800 border border-green-300 font-bold" },
+  upcoming: { text: "📅 参加予定", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  finished: { text: "✓ 参加済み", className: "bg-stone-100 text-stone-500 border border-stone-200" },
+  none:     { text: "✅ 承認済み", className: "bg-green-50 text-green-800 border border-green-200" },
 }
 
 // 募集ステータスのバッジ表示設定（申請済み投稿にのみ表示）
@@ -121,21 +129,29 @@ const PostCard = ({ post, myApplicationStatus }: Props) => {
           </div>
           {myApplicationStatus && (
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* 募集ステータス（申請済み投稿のみ表示） */}
-              {(() => {
-                const isOpen = post.status === "OPEN" && remainingSlots > 0
-                const cfg = isOpen ? recruitStatusConfig.open : recruitStatusConfig.closed
-                return (
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${cfg.className}`}>
-                    {cfg.text}
+              {/* APPROVED: workStatus と組み合わせた参加状態バッジ */}
+              {myApplicationStatus === "APPROVED" ? (
+                <span className={`text-xs px-2.5 py-1 rounded-full ${approvedBadgeConfig[workStatus ?? "none"].className}`}>
+                  {approvedBadgeConfig[workStatus ?? "none"].text}
+                </span>
+              ) : (
+                <>
+                  {/* PENDING / REJECTED: 募集ステータス＋申請ステータスを並べて表示 */}
+                  {(() => {
+                    const isOpen = post.status === "OPEN" && remainingSlots > 0
+                    const cfg = isOpen ? recruitStatusConfig.open : recruitStatusConfig.closed
+                    return (
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${cfg.className}`}>
+                        {cfg.text}
+                      </span>
+                    )
+                  })()}
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${applicationStatusConfig[myApplicationStatus].className}`}>
+                    <span>{applicationStatusConfig[myApplicationStatus].icon}</span>
+                    <span>{applicationStatusConfig[myApplicationStatus].text}</span>
                   </span>
-                )
-              })()}
-              {/* 自分の申請ステータス */}
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${applicationStatusConfig[myApplicationStatus].className}`}>
-                <span>{applicationStatusConfig[myApplicationStatus].icon}</span>
-                <span>{applicationStatusConfig[myApplicationStatus].text}</span>
-              </span>
+                </>
+              )}
             </div>
           )}
         </div>
