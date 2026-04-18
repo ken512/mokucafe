@@ -33,8 +33,8 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: "lat/lng が必要です" }, { status: 400 })
   }
 
-  // 検索半径（デフォルト 100m、最大 1000m）
-  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 100, 1000)
+  // 検索半径（デフォルト 200m、最大 1000m）
+  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 200, 1000)
 
   try {
     const res = await fetch(
