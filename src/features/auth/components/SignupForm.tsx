@@ -55,21 +55,26 @@ const SignupForm = () => {
         />
 
         {/* パスワード：変更時にconfirmPasswordを再バリデート */}
-        <FormField
-          label="パスワード"
-          htmlFor="password"
-          type="password"
-          placeholder="••••••••"
-          errorMessage={errors.password?.message}
-          {...register("password", {
-            required: "パスワードを入力してください",
-            minLength: {
-              value: 6,
-              message: "パスワードは6文字以上で入力してください",
-            },
-            onChange: () => trigger("confirmPassword"),
-          })}
-        />
+        <div className="flex flex-col gap-1">
+          <FormField
+            label="パスワード"
+            htmlFor="password"
+            type="password"
+            placeholder="••••••••"
+            errorMessage={errors.password?.message}
+            {...register("password", {
+              required: "パスワードを入力してください",
+              minLength: {
+                value: 8,
+                message: "パスワードは8文字以上で入力してください",
+              },
+              onChange: () => trigger("confirmPassword"),
+            })}
+          />
+          {!errors.password && (
+            <p className="text-xs text-stone-400 pl-0.5">8文字以上で設定してください</p>
+          )}
+        </div>
 
         <FormField
           label="パスワード（確認）"

@@ -64,6 +64,8 @@ export const useSignup = () => {
         })
       } else {
         // メール確認が必要な場合：確認メール案内
+        // コールバック後にPWAオンボーディングモーダルを表示するためフラグをセットする
+        localStorage.setItem("pwa_onboarding_pending", "1")
         showDialog({
           title: "確認メールを送りました！",
           message: `${email} に確認メールを送信しました。\nメール内のリンクをクリックして登録を完了してください。`,

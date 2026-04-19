@@ -30,34 +30,55 @@ const PwaOnboardingModal = () => {
   const [permissionGranted, setPermissionGranted] = useState(false)
 
   useEffect(() => {
-    // フラグがある場合のみ表示する
+    // フラグがある場合のみ処理する
     if (!localStorage.getItem("pwa_onboarding_pending")) return
 
     const p = detectPlatform()
     setPlatform(p)
 
-    // iOS でスタンドアロン済み or PC は表示しない
+    // PC はモーダルを表示しないが、ウェルカム通知は作成する
     if (p === "other") {
       localStorage.removeItem("pwa_onboarding_pending")
+      createWelcomeNotification("other")
       return
     }
+
+    // iOS でスタンドアロン済みはモーダルを表示しないが、ウェルカム通知は作成する
     if (p === "ios" && isStandalone()) {
       localStorage.removeItem("pwa_onboarding_pending")
+      createWelcomeNotification("ios")
       return
     }
 
     setIsOpen(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ウェルカム通知をアプリ内に作成し、通知ベルを即時更新する
-  const createWelcomeNotification = async () => {
+  // プラットフォーム別のウェルカム通知をアプリ内に作成し、通知ベルを即時更新する
+  const createWelcomeNotification = async (p: Platform) => {
     try {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
+
+      const title = "📲 スマホ通知を受け取ろう"
+      const notifBody =
+        "参加申請・承認・却下などをお知らせします。\n\n" +
+        "【iPhone】\n" +
+        "Safari下部の「共有」ボタン（□↑）→「ホーム画面に追加」→「追加」をタップ。\n" +
+        "ホーム画面のアイコンから起動すると通知が届きます。\n\n" +
+        "【Android】\n" +
+        "「通知を許可する」ボタンをタップするだけで届きます。\n\n" +
+        "【PC】\n" +
+        "ホーム画面への追加は不要です。このアプリ内の通知ベルでお知らせを確認できます ☕"
+
       await fetch("/api/notifications/welcome", {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ title, body: notifBody }),
       })
       // NotificationBell にリフレッシュを通知する
       window.dispatchEvent(new Event("notifications:refresh"))
@@ -69,8 +90,8 @@ const PwaOnboardingModal = () => {
   const close = () => {
     localStorage.removeItem("pwa_onboarding_pending")
     setIsOpen(false)
-    // モーダルを閉じるときにウェルカム通知を作成する（iOS: 手順を確認した後）
-    createWelcomeNotification()
+    // モーダルを閉じるときにウェルカム通知を作成する（プラットフォーム別の内容で）
+    createWelcomeNotification(platform)
   }
 
   // Android: 通知許可 + Push 購読
@@ -109,8 +130,8 @@ const PwaOnboardingModal = () => {
         }
       }
       setPermissionGranted(true)
-      // 通知許可が取れたらウェルカム通知を作成する
-      await createWelcomeNotification()
+      // 通知許可が取れたらAndroid用ウェルカム通知を作成する
+      await createWelcomeNotification("android")
     } catch (e) {
       console.error("Push購読エラー:", e)
       close()
