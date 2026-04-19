@@ -5,6 +5,9 @@ import PostDetail from "./PostDetail"
 import EditPostForm from "./EditPostForm"
 import ShareModal from "./ShareModal"
 import Dialog from "@/components/ui/Dialog"
+import ApplicationList from "@/features/applications/components/ApplicationList"
+import ParticipantList from "@/features/applications/components/ParticipantList"
+import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
 
 type UserSns = {
@@ -66,27 +69,47 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
         />
       )}
 
-      {/* オーナー専用ボタン（編集・シェア） */}
+      {/* オーナー専用操作バー（削除を左・シェア/編集を右に統合） */}
       {isOwner && (
-        <div className="flex justify-end gap-2">
-          {userSns && (
+        <div className="flex items-center justify-between gap-2">
+          <DeletePostButton postId={post.id} />
+          <div className="flex gap-2">
+            {userSns && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-stone-600 bg-white hover:bg-stone-50 border border-stone-200 px-4 py-2 rounded-full transition-colors"
+              >
+                📤 シェアする
+              </button>
+            )}
             <button
-              onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-stone-600 bg-white hover:bg-stone-50 border border-stone-200 px-4 py-2 rounded-full transition-colors"
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-full transition-colors"
             >
-              📤 シェアする
+              ✏️ 編集する
             </button>
-          )}
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-full transition-colors"
-          >
-            ✏️ 編集する
-          </button>
+          </div>
         </div>
       )}
 
       <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+
+      {/* 承認済み参加者一覧（定員満了時はオーナーと参加確定済みユーザーのみ表示） */}
+      {isLoggedIn && (
+        <ParticipantList
+          postId={post.id}
+          isOwner={isOwner}
+          isFull={post.applicantCount >= post.capacity}
+        />
+      )}
+
+      {/* オーナー向け申請一覧 */}
+      {isOwner && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+          <p className="text-sm font-bold text-stone-800">参加申請一覧</p>
+          <ApplicationList postId={post.id} />
+        </div>
+      )}
     </div>
   )
 }

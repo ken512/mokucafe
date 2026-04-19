@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
 import UserMenu from "./UserMenu"
 import GuestMenu from "./GuestMenu"
+import NotificationBell from "./NotificationBell"
 
 // ヘッダー（認証状態に応じてUIを切り替えるサーバーコンポーネント）
 const Header = async () => {
@@ -32,8 +33,8 @@ const Header = async () => {
         </Link>
 
         <div className="flex items-center gap-2">
-          {/* 未ログイン */}
-          {!user && (
+          {/* 未ログイン、または auth セッションはあるが DB レコードがない（破損状態） */}
+          {(!user || (isLoggedIn && !userProfile)) && (
             <>
               <ButtonLink href="/signup" variant="outline" size="sm">新規登録</ButtonLink>
               <ButtonLink href="/login" variant="primary" size="sm">ログイン</ButtonLink>
@@ -43,12 +44,15 @@ const Header = async () => {
           {/* ゲストユーザー */}
           {isGuest && <GuestMenu />}
 
-          {/* ログイン済みユーザー：アバター＋ドロップダウン */}
+          {/* ログイン済みユーザー：通知ベル＋アバタードロップダウン */}
           {isLoggedIn && userProfile && (
-            <UserMenu
-              name={userProfile.name}
-              avatarUrl={userProfile.avatarUrl}
-            />
+            <>
+              <NotificationBell />
+              <UserMenu
+                name={userProfile.name}
+                avatarUrl={userProfile.avatarUrl}
+              />
+            </>
           )}
         </div>
       </div>

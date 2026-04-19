@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
-import Header from "@/components/ui/Header"
 import PostDetailPageClient from "@/features/posts/components/PostDetailPageClient"
 import { Post } from "@/features/posts/types"
 
@@ -61,7 +60,6 @@ const PostDetailPage = async ({ params }: Props) => {
 
   return (
     <div className="min-h-screen bg-stone-100">
-      <Header />
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
         {/* 戻るリンク */}
         <Link

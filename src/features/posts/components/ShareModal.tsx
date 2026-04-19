@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
-type Orientation = "portrait" | "landscape"
 type Platform = "x" | "threads" | "instagram"
 type GeneratedTexts = { x: string; threads: string; instagram: string }
 
@@ -21,17 +20,16 @@ type Props = {
   onClose: () => void
 }
 
-// SNS シェアモーダル（AI文章生成 + シェアカード画像 + プラットフォーム別投稿）
+// SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
 const ShareModal = ({ post, userSns, onClose }: Props) => {
-  const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
   const [texts, setTexts] = useState<GeneratedTexts | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generateError, setGenerateError] = useState<string | null>(null)
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [isCopied, setIsCopied] = useState(false)
+const [isCopied, setIsCopied] = useState(false)
+  // Instagram PC シェア時にテキストコピー済みを通知する
+  const [isInstagramTextCopied, setIsInstagramTextCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   // 利用可能なプラットフォーム（SNS URL が設定済みのもの）
@@ -41,59 +39,40 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // プラットフォーム別シェア文を生成する
-  const handleGenerate = useCallback(async () => {
-    setIsGenerating(true)
-    setGenerateError(null)
-    try {
-      // 認証トークンを取得して Authorization ヘッダーに付与する
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch("/api/ai/generate-share", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token ?? ""}`,
-        },
-        body: JSON.stringify({
-          cafeName: post.cafeName,
-          cafeAddress: post.cafeAddress,
-          date: post.date,
-          endDate: post.endDate,
-          description: post.description,
-          tags: post.tags,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "生成に失敗しました")
-      setTexts(data)
-    } catch (e) {
-      setGenerateError(e instanceof Error ? e.message : "生成に失敗しました")
-    } finally {
-      setIsGenerating(false)
+  // モーダルを開いたときにシェア文を自動生成する
+  useEffect(() => {
+    const generate = async () => {
+      setIsGenerating(true)
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch("/api/ai/generate-share", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({
+            cafeName: post.cafeName,
+            cafeAddress: post.cafeAddress,
+            date: post.date,
+            endDate: post.endDate,
+            description: post.description,
+            tags: post.tags,
+          }),
+        })
+        const data = await res.json()
+        if (res.ok) setTexts(data)
+      } catch {
+        // 生成失敗時はテキストなしのまま続行
+      } finally {
+        setIsGenerating(false)
+      }
     }
+    generate()
   }, [post])
 
-  // シェアカードを画像として取得し Blob を返す
-  const captureCard = useCallback(async (): Promise<Blob | null> => {
-    if (!cardRef.current) return null
-    setIsCapturing(true)
-    try {
-      const { default: html2canvas } = await import("html2canvas")
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: null,
-      })
-      return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
-    } catch {
-      return null
-    } finally {
-      setIsCapturing(false)
-    }
-  }, [])
-
-  // X / Threads へシェア（インテント URL を開く）
+// X / Threads へシェア（インテント URL を開く）
   const handleShare = async (platform: Platform) => {
     const text = texts?.[platform] ?? ""
     const postUrl = `${window.location.origin}/posts/${post.id}`
@@ -110,19 +89,11 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
-      // Instagram はWeb Share API 経由でネイティブシェートを開く
-      const blob = await captureCard()
-      if (blob && navigator.canShare?.({ files: [new File([blob], "mokucafe.png", { type: "image/png" })] })) {
-        await navigator.share({
-          files: [new File([blob], "mokucafe.png", { type: "image/png" })],
-          text: fullText,
-        })
-      } else {
-        // Web Share API 非対応環境ではURLをコピー
-        await navigator.clipboard.writeText(fullText)
-        setIsCopied(true)
-        setTimeout(() => setIsCopied(false), 2000)
-      }
+      // シェア文をコピーして Instagram を開く（スマホ・PC 共通）
+      await navigator.clipboard.writeText(fullText)
+      setIsInstagramTextCopied(true)
+      setTimeout(() => setIsInstagramTextCopied(false), 3000)
+      window.open("https://www.instagram.com/", "_blank")
     }
   }
 
@@ -143,10 +114,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
       >
         {/* ヘッダー */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-stone-100">
-          <div>
-            <p className="text-base font-bold text-stone-800">SNSでシェア</p>
-            <p className="text-xs text-stone-500 mt-0.5">投稿内容からシェア文を自動生成します</p>
-          </div>
+          <p className="text-base font-bold text-stone-800">SNSでシェア</p>
           <button
             onClick={onClose}
             className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none"
@@ -157,31 +125,23 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         </div>
 
         <div className="p-5 flex flex-col gap-5">
-          {/* シェアカード + 縦横トグル */}
-          <div className="flex flex-col items-center gap-3">
-            {/* 縦横トグル */}
-            <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
-              {(["portrait", "landscape"] as Orientation[]).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setOrientation(o)}
-                  className={[
-                    "px-4 py-1.5 transition-colors",
-                    orientation === o
-                      ? "bg-stone-800 text-white"
-                      : "text-stone-600 hover:bg-stone-50",
-                  ].join(" ")}
-                >
-                  {o === "portrait" ? "縦" : "横"}
-                </button>
-              ))}
-            </div>
-
-            {/* カードプレビュー（スケールダウンして表示） */}
-            <div className="overflow-hidden flex justify-center">
-              <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
-                <ShareCard ref={cardRef} post={post} orientation={orientation} />
+          {/* シェアカードプレビュー */}
+          <div className="flex flex-col items-center gap-2">
+            <div style={{
+              width: 360 * 0.75,
+              height: 480 * 0.75,
+              overflow: "hidden",
+              position: "relative",
+              margin: "0 auto",
+            }}>
+              <div style={{
+                transform: "scale(0.75)",
+                transformOrigin: "top left",
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }}>
+                <ShareCard ref={cardRef} post={post} />
               </div>
             </div>
             <p className="text-xs text-stone-400">画像を長押しして保存できます</p>
@@ -208,31 +168,10 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                 ))}
               </div>
 
-              {/* AI生成ボタン */}
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-sm font-medium text-amber-900 hover:bg-amber-100 transition-colors disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <>
-                    <span className="animate-spin">⟳</span>
-                    <span>生成中...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>✨</span>
-                    <span>{texts ? "再生成する" : "AIでシェア文を生成する"}</span>
-                  </>
-                )}
-              </button>
-
-              {generateError && (
-                <p className="text-xs text-red-500">{generateError}</p>
-              )}
-
-              {/* 生成されたテキスト（編集可能） */}
-              {texts && (
+              {/* シェア文（編集可能） */}
+              {isGenerating ? (
+                <p className="text-xs text-stone-400 text-center py-2">シェア文を生成中...</p>
+              ) : texts && (
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-medium text-stone-600">
                     シェア文（編集できます）
@@ -253,17 +192,22 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
 
               {/* シェアボタン */}
               {texts && (
-                <button
-                  onClick={() => handleShare(activePlatform)}
-                  disabled={isCapturing}
-                  className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
-                >
-                  {isCapturing ? "準備中..." : (
-                    activePlatform === "x" ? "𝕏 でポストする" :
-                    activePlatform === "threads" ? "🧵 Threads に投稿する" :
-                    "📸 Instagram にシェアする"
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    onClick={() => handleShare(activePlatform)}
+                    className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
+                  >
+                    {activePlatform === "x" ? "𝕏 でポストする" :
+                     activePlatform === "threads" ? "🧵 Threads に投稿する" :
+                     "📸 Instagram にシェアする"}
+                  </button>
+                  {/* Instagram シェア時にコピー済みを通知する（スマホ・PC 共通） */}
+                  {isInstagramTextCopied && activePlatform === "instagram" && (
+                    <p className="text-xs text-center text-amber-800">
+                      ✅ シェア文をコピーしました。Instagramで貼り付けて投稿してください
+                    </p>
                   )}
-                </button>
+                </div>
               )}
             </div>
           ) : (
