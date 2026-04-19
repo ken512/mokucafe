@@ -21,6 +21,23 @@ const Header = async () => {
       where: { supabaseUserId: user.id },
       select: { name: true, avatarUrl: true },
     })
+
+    // DBレコードがない場合は自動作成（メール確認コールバック失敗などの復旧）
+    if (!userProfile) {
+      const name =
+        (user.user_metadata?.display_name as string | undefined) ??
+        user.email?.split("@")[0] ??
+        "ユーザー"
+      try {
+        await prisma.user.create({ data: { supabaseUserId: user.id, name } })
+      } catch {
+        // 競合などは無視
+      }
+      userProfile = await prisma.user.findUnique({
+        where: { supabaseUserId: user.id },
+        select: { name: true, avatarUrl: true },
+      })
+    }
   }
 
   return (
