@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateRequest } from "@/lib/supabase/auth"
+import { notify } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
 
@@ -38,7 +39,8 @@ export const PATCH = async (request: NextRequest, { params }: Params) => {
       id: true,
       status: true,
       userId: true,
-      post: { select: { userId: true } },
+      user: { select: { name: true } },
+      post: { select: { id: true, userId: true, cafeName: true } },
     },
   })
 
@@ -69,6 +71,37 @@ export const PATCH = async (request: NextRequest, { params }: Params) => {
     data: { status },
     select: { id: true, status: true },
   })
+
+  // ステータスに応じた通知を送る（非同期・失敗しても無視）
+  const cafeName = application.post.cafeName
+  const postId = application.post.id
+  const applicantName = application.user.name
+
+  if (status === "APPROVED") {
+    notify({
+      recipientUserId: application.userId,
+      type: "APPLICATION_APPROVED",
+      title: "参加申請が承認されました",
+      body: `「${cafeName}」への参加申請が承認されました。参加確定を忘れずに！`,
+      postId,
+    }).catch(console.error)
+  } else if (status === "REJECTED") {
+    notify({
+      recipientUserId: application.userId,
+      type: "APPLICATION_REJECTED",
+      title: "参加申請が却下されました",
+      body: `「${cafeName}」への参加申請が却下されました`,
+      postId,
+    }).catch(console.error)
+  } else if (status === "ATTENDING") {
+    notify({
+      recipientUserId: application.post.userId,
+      type: "ATTENDANCE_CONFIRMED",
+      title: "参加が確定しました",
+      body: `${applicantName}さんが「${cafeName}」への参加を確定しました`,
+      postId,
+    }).catch(console.error)
+  }
 
   return NextResponse.json({ application: updated })
 }

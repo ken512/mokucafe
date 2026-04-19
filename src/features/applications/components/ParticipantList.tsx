@@ -6,18 +6,23 @@ import Avatar from "@/components/ui/Avatar"
 
 type Participant = {
   id: number
+  supabaseUserId: string
   name: string
   avatarUrl: string | null
 }
 
 type Props = {
   postId: number
+  isOwner: boolean
+  isFull: boolean
 }
 
 // PostDetail に表示する承認済み参加者一覧
-const ParticipantList = ({ postId }: Props) => {
+// 表示条件: オーナー or 参加確定済みユーザー。定員満了かつ無関係ユーザーには非表示。
+const ParticipantList = ({ postId, isOwner, isFull }: Props) => {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetch_ = async () => {
@@ -27,6 +32,7 @@ const ParticipantList = ({ postId }: Props) => {
         setIsLoading(false)
         return
       }
+      setCurrentUserId(session.user.id)
       const res = await fetch(`/api/posts/${postId}/participants`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
@@ -39,8 +45,11 @@ const ParticipantList = ({ postId }: Props) => {
     fetch_()
   }, [postId])
 
-  // 未ログイン・ローディング・参加者ゼロはセクション自体を非表示にする
   if (isLoading || participants.length === 0) return null
+
+  // 定員満了の場合は オーナー or 参加確定済みユーザーのみ表示する
+  const isParticipant = participants.some((p) => p.supabaseUserId === currentUserId)
+  if (isFull && !isOwner && !isParticipant) return null
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-3">

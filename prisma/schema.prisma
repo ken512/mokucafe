@@ -20,8 +20,10 @@ model User {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  posts        Post[]
-  applications Application[]
+  posts             Post[]
+  applications      Application[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -43,8 +45,9 @@ model Post {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications Application[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications  Application[]
+  notifications Notification[]
 
   // 一覧取得（status + 降順）・テキスト検索（cafeName）用インデックス
   @@index([status, createdAt(sort: Desc)])
@@ -68,6 +71,46 @@ model Application {
   // 同じユーザーが同じ募集に二重申請できないようにする
   @@unique([postId, userId])
   @@map("applications")
+}
+
+// アプリ内通知
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  title     String
+  body      String
+  postId    Int?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// Web Push 購読情報（端末ごとに保持）
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
+
+enum NotificationType {
+  NEW_APPLICATION      // オーナー: 新規申請
+  APPLICATION_APPROVED // 申請者: 承認
+  APPLICATION_REJECTED // 申請者: 却下
+  ATTENDANCE_CONFIRMED // オーナー: 参加確定
+  SYSTEM               // システム通知（ウェルカム・案内など）
 }
 
 enum PostStatus {

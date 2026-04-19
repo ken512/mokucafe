@@ -41,6 +41,7 @@ const ApplyButton = ({ postId, isClosed, isWorkFinished }: Props) => {
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showFinishedDialog, setShowFinishedDialog] = useState(false)
+  const [showFullDialog, setShowFullDialog] = useState(false)
 
   // マウント時に自分の申請ステータスを取得する
   useEffect(() => {
@@ -77,6 +78,13 @@ const ApplyButton = ({ postId, isClosed, isWorkFinished }: Props) => {
       })
       const data = await res.json()
       if (!res.ok) {
+        // 定員超過はダイアログで表示する
+        if (res.status === 400 && data.error === "定員に達しています") {
+          setShowFullDialog(true)
+          setFetchStatus("idle")
+          setShowForm(false)
+          return
+        }
         setErrorMessage(data.error ?? "申請に失敗しました")
         setFetchStatus("error")
         return
@@ -194,6 +202,14 @@ const ApplyButton = ({ postId, isClosed, isWorkFinished }: Props) => {
 
   // メッセージ入力フォーム
   return (
+    <>
+    <Dialog
+      isOpen={showFullDialog}
+      onClose={() => setShowFullDialog(false)}
+      variant="error"
+      title="参加申請できません"
+      message="募集人数に達しているため、参加申請できません。"
+    />
     <div className="flex flex-col gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
       <p className="text-sm font-medium text-stone-800">メッセージ（任意・500文字以内）</p>
       <textarea
@@ -224,6 +240,7 @@ const ApplyButton = ({ postId, isClosed, isWorkFinished }: Props) => {
         </button>
       </div>
     </div>
+    </>
   )
 }
 

@@ -94,8 +94,14 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
 
       <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
 
-      {/* 承認済み参加者一覧（ログイン済みユーザー全員に表示） */}
-      {isLoggedIn && <ParticipantList postId={post.id} />}
+      {/* 承認済み参加者一覧（定員満了時はオーナーと参加確定済みユーザーのみ表示） */}
+      {isLoggedIn && (
+        <ParticipantList
+          postId={post.id}
+          isOwner={isOwner}
+          isFull={post.applicantCount >= post.capacity}
+        />
+      )}
 
       {/* オーナー向け申請一覧 */}
       {isOwner && (

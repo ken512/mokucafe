@@ -5,6 +5,7 @@ import PostList from "./PostList"
 import PostFilter from "./PostFilter"
 import { createClient } from "@/lib/supabase/client"
 import { ApplicationStatus } from "@/features/applications/types"
+import NotificationSetupBanner from "@/components/ui/NotificationSetupBanner"
 
 // 自分の申請一覧を取得してpostId→statusのmapにする
 const fetchMyApplications = async (): Promise<Record<number, ApplicationStatus>> => {
@@ -38,10 +39,19 @@ const PostsPageClient = () => {
 
   // 自分の申請一覧（postId → status）
   const [myApplications, setMyApplications] = useState<Record<number, ApplicationStatus>>({})
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  // マウント時に自分の申請一覧を取得する
+  // マウント時にセッション確認 + 申請一覧を取得する
   useEffect(() => {
-    fetchMyApplications().then(setMyApplications)
+    const init = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      setIsLoggedIn(true)
+      const apps = await fetchMyApplications()
+      setMyApplications(apps)
+    }
+    init()
   }, [])
 
   // q が変わるたびに 300ms デバウンスしてからAPIクエリを更新する
@@ -66,6 +76,7 @@ const PostsPageClient = () => {
 
   return (
     <div className="flex flex-col gap-4">
+      {isLoggedIn && <NotificationSetupBanner />}
       <PostFilter
         q={q}
         tag={tag}

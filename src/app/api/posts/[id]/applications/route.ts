@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateRequest } from "@/lib/supabase/auth"
+import { notify } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +23,14 @@ export const POST = async (request: NextRequest, { params }: Params) => {
   // 投稿の存在確認・ステータス確認
   const post = await prisma.post.findUnique({
     where: { id: postId },
-    select: { id: true, status: true, userId: true, capacity: true, _count: { select: { applications: true } } },
+    select: {
+      id: true,
+      status: true,
+      userId: true,
+      cafeName: true,
+      capacity: true,
+      _count: { select: { applications: true } },
+    },
   })
 
   if (!post) {
@@ -60,6 +68,19 @@ export const POST = async (request: NextRequest, { params }: Params) => {
         createdAt: true,
       },
     })
+    // オーナーに「新規申請」通知を送る（失敗しても申請自体は成功）
+    const applicant = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { name: true },
+    })
+    notify({
+      recipientUserId: post.userId,
+      type: "NEW_APPLICATION",
+      title: "参加申請が届きました",
+      body: `${applicant?.name ?? "ゲスト"}さんから「${post.cafeName}」への参加申請が届きました`,
+      postId,
+    }).catch(console.error)
+
     return NextResponse.json({ application }, { status: 201 })
   } catch (e: unknown) {
     // @@unique 違反 = 二重申請

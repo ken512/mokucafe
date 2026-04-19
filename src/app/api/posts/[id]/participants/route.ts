@@ -20,10 +20,10 @@ export const GET = async (request: NextRequest, { params }: Params) => {
   }
 
   const applications = await prisma.application.findMany({
-    where: { postId, status: "APPROVED" },
+    where: { postId, status: { in: ["APPROVED", "ATTENDING"] } },
     orderBy: { updatedAt: "asc" },
     select: {
-      user: { select: { id: true, name: true, avatarUrl: true } },
+      user: { select: { id: true, supabaseUserId: true, name: true, avatarUrl: true } },
     },
   })
 
