@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { render } from "@react-email/components"
@@ -5,27 +6,44 @@ import ConfirmEmail from "@/emails/ConfirmEmail"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Supabase Hook の HMAC-SHA256 署名を検証する
+const verifySignature = (rawBody: string, signature: string, secret: string): boolean => {
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex")
+  try {
+    return timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(expected, "hex"))
+  } catch {
+    return false
+  }
+}
+
 // Supabase Auth Hook から呼ばれるメール確認送信API
 // Hook payload: { user: { email, user_metadata }, email_data: { token, token_hash, redirect_to, email_action_type } }
 export const POST = async (request: NextRequest) => {
-  // Supabase Hook の署名検証
+  const rawBody = await request.text()
+
+  // Supabase Hook の署名検証（HMAC-SHA256）
   const hookSecret = process.env.SUPABASE_AUTH_HOOK_SECRET
   if (hookSecret) {
-    const signature = request.headers.get("x-supabase-signature")
-    if (!signature || signature !== hookSecret) {
+    const signature = request.headers.get("x-supabase-signature") ?? ""
+    if (!verifySignature(rawBody, signature, hookSecret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
   }
 
-  const body = await request.json().catch(() => null)
-  if (!body) {
+  const body: unknown = JSON.parse(rawBody)
+  if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 })
   }
 
-  const email: string = body.user?.email
-  const displayName: string | undefined = body.user?.user_metadata?.display_name
-  const tokenHash: string = body.email_data?.token_hash
-  const redirectTo: string = body.email_data?.redirect_to ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  const payload = body as {
+    user?: { email?: string; user_metadata?: { display_name?: string } }
+    email_data?: { token_hash?: string; redirect_to?: string }
+  }
+
+  const email = payload.user?.email
+  const displayName = payload.user?.user_metadata?.display_name
+  const tokenHash = payload.email_data?.token_hash
+  const redirectTo = payload.email_data?.redirect_to ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
   if (!email || !tokenHash) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
