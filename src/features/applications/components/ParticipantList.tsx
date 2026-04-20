@@ -59,7 +59,7 @@ const ParticipantList = ({ postId, isOwner, isFull }: Props) => {
 
       {/* アバター＋名前の一覧 */}
       <div className="flex flex-col gap-2">
-        {participants.map((p) => (
+        {participants.map((p: Participant) => (
           <div key={p.id} className="flex items-center gap-2">
             <Avatar name={p.name} avatarUrl={p.avatarUrl} size="sm" />
             <span className="text-sm text-stone-700">{p.name}</span>

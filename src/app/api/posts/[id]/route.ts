@@ -172,7 +172,7 @@ export const DELETE = async (
         //  → userId/file.jpg
         const paths = post.mediaUrls
           .map((url: string) => url.match(/\/object\/public\/post-media\/(.+)$/)?.[1])
-          .filter((p): p is string => p !== undefined)
+          .filter((p: string | undefined): p is string => p !== undefined)
 
         if (paths.length > 0) {
           await supabase.storage.from("post-media").remove(paths)

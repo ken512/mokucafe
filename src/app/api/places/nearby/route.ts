@@ -68,7 +68,7 @@ export const POST = async (request: NextRequest) => {
       return NextResponse.json({ error: `Places API エラー: ${data.error.status}` }, { status: 500 })
     }
 
-    const suggestions: PlaceSuggestion[] = (data.places ?? []).map((p) => ({
+    const suggestions: PlaceSuggestion[] = (data.places ?? []).map((p: NearbyPlace) => ({
       placeId: p.id,
       name: p.displayName.text,
       address: p.formattedAddress,
