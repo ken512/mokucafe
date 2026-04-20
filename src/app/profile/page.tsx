@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { createClient } from "@/lib/supabase/server"
+import { getUser } from "@/lib/supabase/getUser"
 import ProfilePageClient from "@/features/profile/components/ProfilePageClient"
 
 // プロフィールページ（認証必須）
 const ProfilePage = async () => {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
 
   // 未ログインはログインページへ
   if (!user || user.is_anonymous) {

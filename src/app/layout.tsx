@@ -4,7 +4,7 @@ import "./globals.css"
 import Header from "@/components/ui/Header"
 import PushSubscriptionManager from "@/components/ui/PushSubscriptionManager"
 import PwaOnboardingModal from "@/components/ui/PwaOnboardingModal"
-import { createClient } from "@/lib/supabase/server"
+import { getUser } from "@/lib/supabase/getUser"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,8 +38,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   const isLoggedIn = !!user && !user.is_anonymous
 
   return (
