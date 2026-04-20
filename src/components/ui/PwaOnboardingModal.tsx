@@ -23,6 +23,13 @@ const IOS_STEPS = [
   { icon: "🏠", text: "ホーム画面のアイコンからアプリを開くと通知が届くようになります" },
 ]
 
+const ANDROID_STEPS = [
+  { icon: "⋮", text: '画面右上の「︙」（メニュー）をタップ' },
+  { icon: "➕", text: '「ホーム画面に追加」をタップ' },
+  { icon: "✅", text: '名称を確認して「追加」をタップ' },
+  { icon: "🏠", text: "ホーム画面のアイコンからいつでも素早く起動できます" },
+]
+
 // 新規登録後の初回表示：PWAホーム画面追加を案内するモーダル
 const PwaOnboardingModal = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -78,7 +85,8 @@ const PwaOnboardingModal = () => {
         "Safari下部の「共有」ボタン（□↑）→「ホーム画面に追加」→「追加」をタップ。\n" +
         "ホーム画面のアイコンから起動すると通知が届きます。\n\n" +
         "【Android】\n" +
-        "「通知を許可する」ボタンをタップするだけで届きます。\n\n" +
+        "Chrome右上「︙」→「ホーム画面に追加」→「追加」でアプリとして登録できます。\n" +
+        "「通知を許可する」ボタンで申請・承認の通知も届きます。\n\n" +
         "【PC】\n" +
         "ホーム画面への追加は不要です。このアプリ内の通知ベルでお知らせを確認できます ☕"
 
@@ -194,20 +202,36 @@ const PwaOnboardingModal = () => {
           </ol>
         )}
 
-        {/* Android: 通知許可ボタン or 完了メッセージ */}
+        {/* Android: ホーム画面追加手順 + 通知許可ボタン */}
         {platform === "android" && (
-          permissionGranted ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-              <p className="text-sm font-bold text-green-800">✅ 通知が設定されました！</p>
-            </div>
-          ) : (
-            <button
-              onClick={requestAndroidPermission}
-              className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
-            >
-              🔔 通知を許可する
-            </button>
-          )
+          <div className="flex flex-col gap-4">
+            <ol className="flex flex-col gap-3">
+              {ANDROID_STEPS.map((step, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-amber-900 text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-stone-700 leading-relaxed">
+                    <span className="mr-1">{step.icon}</span>{step.text}
+                  </p>
+                </li>
+              ))}
+            </ol>
+
+            {/* 通知許可ボタン or 完了メッセージ */}
+            {permissionGranted ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                <p className="text-sm font-bold text-green-800">✅ 通知が設定されました！</p>
+              </div>
+            ) : (
+              <button
+                onClick={requestAndroidPermission}
+                className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
+              >
+                🔔 通知を許可する
+              </button>
+            )}
+          </div>
         )}
 
         {/* 閉じるボタン */}
