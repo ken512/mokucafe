@@ -26,15 +26,12 @@ export const useLogin = () => {
         return
       }
 
-      // ダイアログを表示し、OKを押したらホームへ遷移
+      // router.refresh() を除去（二重描画を防ぐ）
       showDialog({
         title: "ログインしました！",
         message: "おかえりなさい ☕\nもくカフェへようこそ。",
         variant: "success",
-        onClose: () => {
-          router.push("/")
-          router.refresh()
-        },
+        onClose: () => router.push("/"),
       })
     } finally {
       setIsLoading(false)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import PostCard from "./PostCard"
 import { usePosts } from "../hooks/usePosts"
 import ErrorAlert from "@/components/ui/ErrorAlert"
@@ -32,10 +32,13 @@ const PostList = ({ q, tag, myApplications = {}, applicationStatusFilter }: Prop
   const { posts, isLoading, error, isLoadingMore, hasMore, loadMore } =
     usePosts({ q, tag })
 
-  // 申請ステータスフィルターが指定されている場合はクライアント側で絞り込む
-  const filteredPosts = applicationStatusFilter
-    ? posts.filter((post) => myApplications[post.id] === applicationStatusFilter)
-    : posts
+  // 申請ステータスフィルターが変わったときだけ再計算する
+  const filteredPosts = useMemo(
+    () => applicationStatusFilter
+      ? posts.filter((post) => myApplications[post.id] === applicationStatusFilter)
+      : posts,
+    [posts, myApplications, applicationStatusFilter]
+  )
 
   // センチネルdivがビューポートに入ったら次のページを取得する
   const sentinelRef = useRef<HTMLDivElement>(null)
