@@ -44,7 +44,7 @@ export const GET = async (request: NextRequest) => {
     const formattedAddress = data.formattedAddress
       ?.replace(/^(Japan,\s*|日本、\s*)/i, "") ?? null
     return NextResponse.json({ formattedAddress })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[places/details] fetch error:", e)
     return NextResponse.json({ error: "通信エラーが発生しました" }, { status: 500 })
   }

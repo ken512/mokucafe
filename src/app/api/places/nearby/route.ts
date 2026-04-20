@@ -75,7 +75,7 @@ export const POST = async (request: NextRequest) => {
     }))
 
     return NextResponse.json({ suggestions })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[places/nearby] fetch error:", e)
     return NextResponse.json({ error: "近くのカフェ取得に失敗しました" }, { status: 500 })
   }

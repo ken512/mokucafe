@@ -96,7 +96,7 @@ export const useUpdatePost = () => {
 
       const data = await res.json()
       return data.post as Post
-    } catch (e) {
+    } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "通信エラーが発生しました")
       return null
     } finally {

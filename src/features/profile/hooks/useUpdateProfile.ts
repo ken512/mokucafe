@@ -78,7 +78,7 @@ export const useUpdateProfile = () => {
 
       const data = await res.json()
       return data.profile as Profile
-    } catch (e) {
+    } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "通信エラーが発生しました")
       return null
     } finally {

@@ -88,7 +88,7 @@ export const useCreatePost = () => {
       const data: CreatePostResponse = await res.json()
       // 成功IDをセットする（フォーム側でダイアログを表示してから遷移する）
       setSuccessPostId(data.post.id)
-    } catch (e) {
+    } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "通信エラーが発生しました。時間をおいて再度お試しください")
     } finally {
       setIsLoading(false)

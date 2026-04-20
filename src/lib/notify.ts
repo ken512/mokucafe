@@ -24,7 +24,7 @@ export const notify = async ({ recipientUserId, type, title, body, postId }: Not
       body,
       url: postId ? `/posts/${postId}` : "/",
     })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[notify] Web Push 送信失敗:", e)
   }
 }

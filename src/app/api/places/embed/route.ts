@@ -44,7 +44,7 @@ export const GET = async (request: NextRequest) => {
       status: 200,
       headers: { "Content-Type": "image/png" },
     })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[places/embed] fetch error:", e)
     console.error("[places/embed] fetch error:", e)
     return new Response("地図の取得に失敗しました", { status: 500 })

@@ -67,7 +67,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "生成に失敗しました")
       setTexts(data)
-    } catch (e) {
+    } catch (e: unknown) {
       setGenerateError(e instanceof Error ? e.message : "生成に失敗しました")
     } finally {
       setIsGenerating(false)

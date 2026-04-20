@@ -81,7 +81,7 @@ const NotificationSetupBanner = () => {
             }
           }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("通知設定エラー:", e)
       }
       dismiss()

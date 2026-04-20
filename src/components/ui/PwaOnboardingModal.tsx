@@ -92,7 +92,7 @@ const PwaOnboardingModal = () => {
       })
       // NotificationBell にリフレッシュを通知する
       window.dispatchEvent(new Event("notifications:refresh"))
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("ウェルカム通知の作成失敗:", e)
     }
   }
@@ -142,7 +142,7 @@ const PwaOnboardingModal = () => {
       setPermissionGranted(true)
       // 通知許可が取れたらAndroid用ウェルカム通知を作成する
       await createWelcomeNotification("android")
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Push購読エラー:", e)
       close()
     }

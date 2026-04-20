@@ -85,7 +85,7 @@ export const POST = async (request: NextRequest) => {
 
     const generated: { x: string; threads: string; instagram: string } = JSON.parse(jsonMatch[0])
     return NextResponse.json(generated)
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[generate-share] Gemini エラー:", e)
     return NextResponse.json({ error: "シェア文の生成に失敗しました" }, { status: 500 })
   }

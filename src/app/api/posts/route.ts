@@ -60,7 +60,7 @@ export const GET = async (request: NextRequest) => {
     const nextCursor = hasMore ? items[items.length - 1].id : null
 
     return NextResponse.json({
-      posts: items.map((post) => ({
+      posts: items.map((post: typeof posts[number]) => ({
         id: post.id,
         cafeName: post.cafeName,
         cafeAddress: post.cafeAddress,

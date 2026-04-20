@@ -32,7 +32,7 @@ export const GET = async (request: NextRequest) => {
 
     console.log(`[cron/cleanup] ${count} 件の期限切れ投稿を削除しました`)
     return NextResponse.json({ deleted: count })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[cron/cleanup] 削除エラー:", e)
     return NextResponse.json({ error: "削除処理に失敗しました" }, { status: 500 })
   }

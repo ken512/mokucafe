@@ -96,7 +96,7 @@ export const POST = async (request: NextRequest) => {
     }))
 
     return NextResponse.json({ suggestions })
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("[Places API (New)] fetch error:", e)
     return NextResponse.json({ error: "候補の取得に失敗しました" }, { status: 500 })
   }
