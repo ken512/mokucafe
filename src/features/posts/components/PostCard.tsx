@@ -6,13 +6,29 @@ import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
 import ButtonLink from "@/components/ui/ButtonLink"
 import { useWorkStatus } from "../hooks/useWorkStatus"
-import { getStatusDisplay } from "../utils/postStatus"
+import { getStatusDisplay, getAttendingBadge, getApprovedBadge } from "../utils/postStatus"
+import { ApplicationStatus } from "@/features/applications/types"
 
 // URLが動画ファイルかどうかを判定する
 const isVideoUrl = (url: string) => /\.(mp4|mov|quicktime)$/i.test(url)
 
+// 申請ステータスのバッジ表示設定（PENDING / REJECTED はそのまま表示）
+const applicationStatusConfig: Record<ApplicationStatus, { text: string; icon: string; className: string }> = {
+  PENDING:   { text: "申請中",  icon: "⏳", className: "bg-amber-50 text-amber-800 border border-amber-200" },
+  APPROVED:  { text: "承認済み", icon: "✅", className: "bg-green-50 text-green-800 border border-green-200" },
+  ATTENDING: { text: "参加確定", icon: "🟢", className: "bg-green-100 text-green-800 border border-green-300" },
+  REJECTED:  { text: "却下",    icon: "✕",  className: "bg-stone-100 text-stone-500 border border-stone-200" },
+}
+
+// 募集ステータスのバッジ表示設定（申請済み投稿にのみ表示）
+const recruitStatusConfig = {
+  open:   { text: "募集中",   className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  closed: { text: "締め切り", className: "bg-stone-100 text-stone-500 border border-stone-200" },
+}
+
 type Props = {
   post: Post
+  myApplicationStatus?: ApplicationStatus
 }
 
 // "2026-04-11T14:00:00Z" → "4/11 14:00"
@@ -25,7 +41,7 @@ const formatDate = (isoString: string): string => {
   return `${month}/${day} ${hours}:${minutes}`
 }
 
-const PostCard = ({ post }: Props) => {
+const PostCard = ({ post, myApplicationStatus }: Props) => {
   const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
   // 画像URLを先頭から探す（動画は除く）
   const thumbnailUrl = post.mediaUrls.find((url) => !isVideoUrl(url))
@@ -98,10 +114,44 @@ const PostCard = ({ post }: Props) => {
           </ButtonLink>
         </div>
 
-        {/* 投稿者 */}
-        <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
-          <Avatar name={post.host.name} avatarUrl={post.host.avatarUrl} />
-          <span className="text-sm text-stone-600">{post.host.name}</span>
+        {/* 投稿者＋申請ステータス */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
+          <div className="flex items-center gap-2">
+            <Avatar name={post.host.name} avatarUrl={post.host.avatarUrl} />
+            <span className="text-sm text-stone-600">{post.host.name}</span>
+          </div>
+          {myApplicationStatus && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* ATTENDING: 参加確定 × workStatus の組み合わせバッジ */}
+              {myApplicationStatus === "ATTENDING" ? (
+                (() => { const b = getAttendingBadge(workStatus); return (
+                  <span className={`text-xs px-2.5 py-1 rounded-full ${b.className}`}>{b.text}</span>
+                )})()
+              ) : myApplicationStatus === "APPROVED" ? (
+                /* APPROVED（未確定）: workStatus と組み合わせた参加予定バッジ */
+                (() => { const b = getApprovedBadge(workStatus); return (
+                  <span className={`text-xs px-2.5 py-1 rounded-full ${b.className}`}>{b.text}</span>
+                )})()
+              ) : (
+                <>
+                  {/* PENDING / REJECTED: 募集ステータス＋申請ステータスを並べて表示 */}
+                  {(() => {
+                    const isOpen = post.status === "OPEN" && remainingSlots > 0
+                    const cfg = isOpen ? recruitStatusConfig.open : recruitStatusConfig.closed
+                    return (
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${cfg.className}`}>
+                        {cfg.text}
+                      </span>
+                    )
+                  })()}
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${applicationStatusConfig[myApplicationStatus].className}`}>
+                    <span>{applicationStatusConfig[myApplicationStatus].icon}</span>
+                    <span>{applicationStatusConfig[myApplicationStatus].text}</span>
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

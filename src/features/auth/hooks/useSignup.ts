@@ -49,6 +49,9 @@ export const useSignup = () => {
           body: JSON.stringify({ name: displayName }),
         })
 
+        // 初回登録フラグ：ホーム遷移後にPWAオンボーディングモーダルを表示する
+        localStorage.setItem("pwa_onboarding_pending", "1")
+
         // メール確認不要の設定の場合：即ログインしてホームへ
         showDialog({
           title: "登録完了！",
@@ -61,6 +64,8 @@ export const useSignup = () => {
         })
       } else {
         // メール確認が必要な場合：確認メール案内
+        // コールバック後にPWAオンボーディングモーダルを表示するためフラグをセットする
+        localStorage.setItem("pwa_onboarding_pending", "1")
         showDialog({
           title: "確認メールを送りました！",
           message: `${email} に確認メールを送信しました。\nメール内のリンクをクリックして登録を完了してください。`,

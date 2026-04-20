@@ -1,5 +1,4 @@
 import Image from "next/image"
-import Header from "@/components/ui/Header"
 import ButtonLink from "@/components/ui/ButtonLink"
 import GuestLoginButton from "@/features/auth/components/GuestLoginButton"
 import PostList from "@/features/posts/components/PostList"
@@ -16,8 +15,6 @@ const HERO_IMAGE_URL = "https://images.unsplash.com/photo-1501339847302-ac426a4a
 const Home = () => {
   return (
     <div className="min-h-screen bg-stone-100">
-      <Header />
-
       <main className="flex flex-col">
         {/* ヒーローセクション：カフェ写真 + 濃いオーバーレイ（min-h でfill画像の高さを保証） */}
         <section className="relative overflow-hidden min-h-64">

@@ -6,6 +6,11 @@ export const dynamic = "force-dynamic"
 // POST /api/cron/cleanup
 // 作業終了から1時間以上経過した投稿を自動削除する（Vercel Cron Job で毎時実行）
 export const GET = async (request: NextRequest) => {
+  // CRON_SECRET 未設定の場合はサーバー設定エラーとして早期リターン
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "CRON_SECRET が未設定です" }, { status: 500 })
+  }
+
   // Vercel Cron からのリクエストのみ受け付ける
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
