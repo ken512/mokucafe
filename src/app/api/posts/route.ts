@@ -13,7 +13,7 @@ const cleanupExpiredPosts = () => {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
   prisma.post.deleteMany({
     where: { endDate: { lt: oneDayAgo } },
-  }).catch((e) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
+  }).catch((e: unknown) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
 }
 
 // GET /api/posts?cursor=<id>&limit=10&q=<検索>&tag=<タグ>
