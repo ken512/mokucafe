@@ -3,21 +3,42 @@
 import { useRef } from "react"
 import Image from "next/image"
 
+type FileState = { status: "uploading" | "done" | "error"; error?: string } | undefined
+
 type Props = {
   images: File[]
   video: File | null
   onImagesChange: (files: File[]) => void
   onVideoChange: (file: File | null) => void
+  // アップロード状態をサムネイルに表示するために受け取る（省略時はオーバーレイなし）
+  getFileState?: (file: File) => FileState
+}
+
+// ファイルのアップロード状態オーバーレイ
+const UploadOverlay = ({ state }: { state: FileState }) => {
+  if (!state || state.status === "done") return null
+  if (state.status === "uploading") {
+    return (
+      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  // error
+  return (
+    <div className="absolute inset-0 bg-red-900/70 flex items-center justify-center rounded-xl">
+      <span className="text-white text-xs text-center px-1">{state.error ?? "エラー"}</span>
+    </div>
+  )
 }
 
 // 画像2枚・動画1本をボタンクリックで選択するUI
-const MediaUploader = ({ images, video, onImagesChange, onVideoChange }: Props) => {
+const MediaUploader = ({ images, video, onImagesChange, onVideoChange, getFileState = () => undefined }: Props) => {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
-    // 残り枠分だけ追加する
     const remaining = 2 - images.length
     onImagesChange([...images, ...files.slice(0, remaining)])
     e.target.value = ""
@@ -52,10 +73,11 @@ const MediaUploader = ({ images, video, onImagesChange, onVideoChange }: Props) 
               className="object-cover"
               unoptimized
             />
+            <UploadOverlay state={getFileState(file)} />
             <button
               type="button"
               onClick={() => removeImage(i)}
-              className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none"
+              className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none z-10"
               aria-label={`写真${i + 1}を削除`}
             >
               ✕
@@ -77,22 +99,22 @@ const MediaUploader = ({ images, video, onImagesChange, onVideoChange }: Props) 
 
         {/* 選択済み動画のプレビュー */}
         {video ? (
-          <div className="relative w-24 h-24 rounded-xl border border-stone-200 bg-stone-50 flex flex-col items-center justify-center px-2">
+          <div className="relative w-24 h-24 rounded-xl border border-stone-200 bg-stone-50 flex flex-col items-center justify-center px-2 overflow-hidden">
             <span className="text-2xl">🎬</span>
             <p className="text-xs text-stone-500 text-center truncate w-full mt-1">
               {video.name}
             </p>
+            <UploadOverlay state={getFileState(video)} />
             <button
               type="button"
               onClick={() => onVideoChange(null)}
-              className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none"
+              className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none z-10"
               aria-label="動画を削除"
             >
               ✕
             </button>
           </div>
         ) : (
-          /* 動画追加ボタン */
           <button
             type="button"
             onClick={() => videoInputRef.current?.click()}
@@ -108,7 +130,6 @@ const MediaUploader = ({ images, video, onImagesChange, onVideoChange }: Props) 
         写真：JPG・PNG・WebP ／ 動画：MP4・MOV
       </p>
 
-      {/* hidden input（直接レンダリングしないためボタンから ref で起動する） */}
       <input
         ref={imageInputRef}
         type="file"
