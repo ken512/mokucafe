@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
+import { getUser } from "@/lib/supabase/getUser"
 import PostDetailPageClient from "@/features/posts/components/PostDetailPageClient"
 import { Post } from "@/features/posts/types"
 
@@ -15,7 +16,14 @@ const PostDetailPage = async ({ params }: Props) => {
   const postId = parseInt(id)
   if (isNaN(postId)) notFound()
 
-  const [postRaw, supabase] = await Promise.all([
+  // JWT をローカルで読むだけ（ネットワーク不要）→ SNSクエリの投機的並列実行に使う
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  const speculativeUserId = session?.user?.id
+
+  // 投稿取得・認証検証・SNS取得を全て並列実行する
+  // SNSクエリはオーナーでなかった場合は結果を捨てる（投機的実行）
+  const [postRaw, authResult, snsResult] = await Promise.all([
     prisma.post.findUnique({
       where: { id: postId },
       include: {
@@ -23,23 +31,23 @@ const PostDetailPage = async ({ params }: Props) => {
         _count: { select: { applications: true } },
       },
     }),
-    createClient(),
+    // React cache() により layout.tsx の getUser() と重複しない
+    getUser(),
+    speculativeUserId
+      ? prisma.user.findUnique({
+          where: { supabaseUserId: speculativeUserId },
+          select: { xUrl: true, threadsUrl: true, instagramUrl: true },
+        })
+      : Promise.resolve(null),
   ])
 
   if (!postRaw) notFound()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = authResult.data.user
   const isLoggedIn = !!user && user.is_anonymous !== true
-  // ログイン中ユーザーのSupabase UUIDと投稿者のIDが一致する場合に投稿者と判定する
   const isOwner = isLoggedIn && user?.id === postRaw.user.supabaseUserId
-
-  // オーナーの SNS リンクをシェアボタン表示に使う
-  const userSns = isOwner
-    ? await prisma.user.findUnique({
-        where: { supabaseUserId: user!.id },
-        select: { xUrl: true, threadsUrl: true, instagramUrl: true },
-      })
-    : null
+  // 投機的に取得したSNSはオーナーの場合のみ使う
+  const userSns = isOwner ? snsResult : null
 
   const post: Post = {
     id: postRaw.id,
@@ -61,7 +69,6 @@ const PostDetailPage = async ({ params }: Props) => {
   return (
     <div className="min-h-screen bg-stone-100">
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
-        {/* 戻るリンク */}
         <Link
           href="/"
           className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-full transition-colors self-start"
