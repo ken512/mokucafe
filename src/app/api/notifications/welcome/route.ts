@@ -12,9 +12,9 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: auth.message }, { status: 401 })
   }
 
-  // 既にウェルカム通知が存在する場合は重複作成しない
+  // 既にウェルカム通知が存在する場合は重複作成しない（titleで判定し管理者通知と混同しない）
   const existing = await prisma.notification.findFirst({
-    where: { userId: auth.userId, type: "SYSTEM" },
+    where: { userId: auth.userId, type: "SYSTEM", title: "📲 スマホ通知を受け取ろう" },
   })
   if (existing) {
     return NextResponse.json({ ok: true, skipped: true })
