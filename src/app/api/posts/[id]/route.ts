@@ -171,7 +171,7 @@ export const DELETE = async (
         // 例: https://xxx.supabase.co/storage/v1/object/public/post-media/userId/file.jpg
         //  → userId/file.jpg
         const paths = post.mediaUrls
-          .map((url) => url.match(/\/object\/public\/post-media\/(.+)$/)?.[1])
+          .map((url: string) => url.match(/\/object\/public\/post-media\/(.+)$/)?.[1])
           .filter((p): p is string => p !== undefined)
 
         if (paths.length > 0) {
