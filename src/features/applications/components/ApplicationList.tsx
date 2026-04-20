@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import Avatar from "@/components/ui/Avatar"
 import { Application } from "../types"
@@ -94,8 +94,17 @@ const ApplicationList = ({ postId }: Props) => {
     fetch_()
   }, [postId])
 
+  const pending = useMemo(
+    () => applications.filter((a) => a.status === "PENDING"),
+    [applications]
+  )
+  const processed = useMemo(
+    () => applications.filter((a) => a.status !== "PENDING"),
+    [applications]
+  )
+
   // 承認 or 却下する
-  const handleUpdate = async (applicationId: number, status: "APPROVED" | "REJECTED") => {
+  const handleUpdate = useCallback(async (applicationId: number, status: "APPROVED" | "REJECTED") => {
     setProcessingId(applicationId)
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
@@ -113,7 +122,7 @@ const ApplicationList = ({ postId }: Props) => {
       )
     }
     setProcessingId(null)
-  }
+  }, [])
 
   if (isLoading) {
     return <p className="text-sm text-stone-400 text-center py-4">読み込み中...</p>
@@ -122,9 +131,6 @@ const ApplicationList = ({ postId }: Props) => {
   if (applications.length === 0) {
     return <p className="text-sm text-stone-500 text-center py-4">まだ申請はありません</p>
   }
-
-  const pending = applications.filter((a) => a.status === "PENDING")
-  const processed = applications.filter((a) => a.status !== "PENDING")
 
   return (
     <div className="flex flex-col gap-4">

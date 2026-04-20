@@ -1,8 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+
+// コンポーネント外で定義してレンダリングごとの再生成を防ぐ
+const formatDate = (iso: string): string => {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
 
 type AppNotification = {
   id: number
@@ -77,7 +83,10 @@ const NotificationBell = () => {
     if (!isOpen) setSelectedIds(new Set())
   }, [isOpen])
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  )
 
   const handleOpen = async () => {
     const next = !isOpen
@@ -158,11 +167,6 @@ const NotificationBell = () => {
       setSelectedIds(new Set())
     }
     setIsDeleting(false)
-  }
-
-  const formatDate = (iso: string) => {
-    const d = new Date(iso)
-    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
   }
 
   return (

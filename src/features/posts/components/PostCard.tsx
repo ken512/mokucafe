@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import Image from "next/image"
 import { Post } from "../types"
 import Tag from "@/components/ui/Tag"
@@ -42,9 +43,15 @@ const formatDate = (isoString: string): string => {
 }
 
 const PostCard = ({ post, myApplicationStatus }: Props) => {
-  const remainingSlots = Math.max(0, post.capacity - post.applicantCount)
+  const remainingSlots = useMemo(
+    () => Math.max(0, post.capacity - post.applicantCount),
+    [post.capacity, post.applicantCount]
+  )
   // 画像URLを先頭から探す（動画は除く）
-  const thumbnailUrl = post.mediaUrls.find((url) => !isVideoUrl(url))
+  const thumbnailUrl = useMemo(
+    () => post.mediaUrls.find((url) => !isVideoUrl(url)),
+    [post.mediaUrls]
+  )
   // リアルタイムステータス（endDate がない場合は undefined）
   const workStatus = useWorkStatus(post.date, post.endDate)
 
@@ -158,4 +165,5 @@ const PostCard = ({ post, myApplicationStatus }: Props) => {
   )
 }
 
-export default PostCard
+// post props が変わらない限り再レンダリングしない
+export default memo(PostCard)
