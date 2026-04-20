@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, KeyboardEvent } from "react"
+import { useState, useEffect, KeyboardEvent } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
 import FormField from "@/components/ui/FormField"
@@ -11,10 +11,10 @@ import NumberInput from "@/components/ui/NumberInput"
 import CafeAutocompleteInput from "./CafeAutocompleteInput"
 import MediaUploader from "./MediaUploader"
 import { useCreatePost } from "../hooks/useCreatePost"
+import { useEagerUpload } from "../hooks/useEagerUpload"
 import { CreatePostRequest } from "../types"
 import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
-// react-hook-form 用のフォーム値型（date・endDate は変換が必要なため string で受け取る）
 type FormValues = Omit<CreatePostRequest, "tags" | "mediaUrls"> & {
   date: string
   endDate: string
@@ -24,6 +24,7 @@ type FormValues = Omit<CreatePostRequest, "tags" | "mediaUrls"> & {
 const CreatePostForm = () => {
   const router = useRouter()
   const { createPost, isLoading, error, successPostId } = useCreatePost()
+  const { upload, remove, isAllDone, getUrls, getState } = useEagerUpload()
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
   const [images, setImages] = useState<File[]>([])
@@ -38,15 +39,41 @@ const CreatePostForm = () => {
     formState: { errors },
   } = useForm<FormValues>()
 
-  // Places Autocomplete で候補を選択したとき、住所フィールドを自動入力する
-  // cafeName は Controller 経由で onChange が呼ばれるため setValue 不要
+  // 画像が追加されたら即座にバックグラウンドでアップロードを開始する
+  useEffect(() => {
+    for (const file of images) {
+      if (!getState(file)) {
+        upload(file, "image")
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images])
+
+  // 動画が追加されたら即座にバックグラウンドでアップロードを開始する
+  useEffect(() => {
+    if (video && !getState(video)) {
+      upload(video, "video")
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [video])
+
+  const handleImagesChange = (files: File[]) => {
+    // 削除されたファイルをアップロード状態から除去する
+    const removed = images.filter(f => !files.includes(f))
+    removed.forEach(remove)
+    setImages(files)
+  }
+
+  const handleVideoChange = (file: File | null) => {
+    if (video && !file) remove(video)
+    setVideo(file)
+  }
+
   const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
     setValue("cafeAddress", suggestion.address, { shouldValidate: true })
     setCafePlaceId(suggestion.placeId)
   }
 
-  // Enterキーでタグを追加する（フォーム送信は防ぐ）
-  // isComposing チェックで日本語IME変換確定時の誤発火を防ぐ
   const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter" || e.nativeEvent.isComposing) return
     e.preventDefault()
@@ -56,7 +83,6 @@ const CreatePostForm = () => {
   const addTag = () => {
     const trimmed = tagInput.trim()
     setTagInput("")
-    // 空・重複・5個以上は追加しない
     if (!trimmed || tags.includes(trimmed) || tags.length >= 5) return
     setTags([...tags, trimmed])
   }
@@ -66,22 +92,28 @@ const CreatePostForm = () => {
   }
 
   const onSubmit = (values: FormValues) => {
+    const allFiles = [...images, ...(video ? [video] : [])]
+
+    // アップロードがまだ完了していない場合は待つ
+    if (!isAllDone(allFiles)) return
+
+    const mediaUrls = getUrls(allFiles) ?? []
     createPost({
       ...values,
-      // datetime-local の値（"2026-04-15T10:00"）を ISO8601 に変換する
       date: new Date(values.date).toISOString(),
       endDate: new Date(values.endDate).toISOString(),
       capacity: Number(values.capacity),
       cafePlaceId,
       tags,
-      images,
-      video,
+      mediaUrls,
     })
   }
 
+  const allFiles = [...images, ...(video ? [video] : [])]
+  const isUploading = allFiles.length > 0 && !isAllDone(allFiles)
+
   return (
     <>
-      {/* 投稿完了ダイアログ */}
       <Dialog
         isOpen={successPostId !== null}
         onClose={() => router.push(`/posts/${successPostId}`)}
@@ -94,7 +126,6 @@ const CreatePostForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {error && <ErrorAlert message={error} />}
 
-        {/* カフェ名（Controller で react-hook-form と接続） */}
         <div className="flex flex-col gap-1.5">
           <Controller
             name="cafeName"
@@ -115,7 +146,6 @@ const CreatePostForm = () => {
           )}
         </div>
 
-        {/* カフェ住所（Autocomplete で自動入力・手動入力も可） */}
         <FormField
           label="住所（任意）"
           htmlFor="cafeAddress"
@@ -124,7 +154,6 @@ const CreatePostForm = () => {
           {...register("cafeAddress")}
         />
 
-        {/* 作業開始日時・終了日時 */}
         <div className="flex flex-col gap-3">
           <FormField
             label="作業開始日時"
@@ -151,7 +180,6 @@ const CreatePostForm = () => {
           />
         </div>
 
-        {/* 募集人数 */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-stone-700">募集人数</label>
           <Controller
@@ -175,7 +203,6 @@ const CreatePostForm = () => {
           )}
         </div>
 
-        {/* 作業内容・説明 */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="description" className="text-sm font-medium text-stone-700">
             作業内容・ひとこと
@@ -197,13 +224,11 @@ const CreatePostForm = () => {
           )}
         </div>
 
-        {/* タグ（自由入力・最大5個） */}
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-stone-700">
             タグ（任意・最大5個）
           </span>
 
-          {/* 追加済みタグ */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -225,7 +250,6 @@ const CreatePostForm = () => {
             </div>
           )}
 
-          {/* タグ入力欄（5個未満のときのみ表示） */}
           {tags.length < 5 && (
             <div className="flex gap-2">
               <input
@@ -249,12 +273,12 @@ const CreatePostForm = () => {
           <p className="text-xs text-stone-400">Enterまたは「追加」ボタンでタグを追加できます</p>
         </div>
 
-        {/* 写真・動画アップロード */}
         <MediaUploader
           images={images}
           video={video}
-          onImagesChange={setImages}
-          onVideoChange={setVideo}
+          onImagesChange={handleImagesChange}
+          onVideoChange={handleVideoChange}
+          getFileState={getState}
         />
 
         <Button
@@ -262,8 +286,8 @@ const CreatePostForm = () => {
           variant="primary"
           size="lg"
           fullWidth
-          isLoading={isLoading}
-          loadingText="投稿中..."
+          isLoading={isLoading || isUploading}
+          loadingText={isUploading ? "写真をアップロード中..." : "投稿中..."}
           className="mt-2"
         >
           募集を投稿する
