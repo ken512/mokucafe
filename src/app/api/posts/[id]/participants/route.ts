@@ -27,7 +27,7 @@ export const GET = async (request: NextRequest, { params }: Params) => {
     },
   })
 
-  const participants = applications.map((a) => a.user)
+  const participants = applications.map((a: { user: { id: number; supabaseUserId: string; name: string; avatarUrl: string | null } }) => a.user)
 
   return NextResponse.json({ participants })
 }
