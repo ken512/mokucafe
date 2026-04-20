@@ -1,10 +1,9 @@
-import { NotificationType } from "@prisma/client"
 import { prisma } from "./prisma"
 import { sendPush } from "./webpush"
 
 type NotifyInput = {
   recipientUserId: number   // 通知を受け取るユーザーの DB id
-  type: NotificationType
+  type: "NEW_APPLICATION" | "APPLICATION_APPROVED" | "APPLICATION_REJECTED" | "ATTENDANCE_CONFIRMED" | "SYSTEM"
   title: string
   body: string
   postId?: number
