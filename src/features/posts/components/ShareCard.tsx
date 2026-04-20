@@ -3,11 +3,14 @@ import { Post } from "../types"
 
 type Props = {
   post: Post
+  orientation: "portrait" | "landscape"
 }
 
-// html2canvas でキャプチャするシェアカード（縦固定）
+// html2canvas でキャプチャするシェアカード
 // 外部フォント・外部画像は CORS 問題を避けるため使用しない
-const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
+const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref) => {
+  const isPortrait = orientation === "portrait"
+
   // 日時フォーマット
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -21,8 +24,8 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
     <div
       ref={ref}
       style={{
-        width: 360,
-        height: 480,
+        width: isPortrait ? 360 : 540,
+        height: isPortrait ? 480 : 300,
         backgroundColor: "#fafaf9",
         borderRadius: 20,
         padding: 32,
@@ -33,10 +36,9 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
         position: "relative",
         overflow: "hidden",
         border: "1px solid #e7e5e4",
-        boxSizing: "border-box",
       }}
     >
-      {/* 背景装飾 */}
+      {/* 背景装飾（コーヒーカップ風グラデーション） */}
       <div style={{
         position: "absolute",
         top: -40,
@@ -65,7 +67,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
 
         {/* カフェ名 */}
         <p style={{
-          fontSize: 22,
+          fontSize: isPortrait ? 22 : 20,
           fontWeight: 800,
           color: "#1c1917",
           margin: 0,
@@ -85,22 +87,14 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
 
         {/* 住所 */}
         {post.cafeAddress && (
-          <p style={{
-            fontSize: 11,
-            color: "#78716c",
-            margin: 0,
-            display: "-webkit-box",
-            WebkitLineClamp: 1,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}>
+          <p style={{ fontSize: 12, color: "#78716c", margin: 0 }}>
             📍 {post.cafeAddress}
           </p>
         )}
 
         {/* タグ */}
         {post.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
             {post.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
@@ -126,37 +120,22 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post }, ref) => {
       </div>
 
       {/* ホスト */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-        {post.host.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.host.avatarUrl}
-            alt={post.host.name ?? ""}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              objectFit: "cover",
-              flexShrink: 0,
-            }}
-          />
-        ) : (
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            backgroundColor: "#78350f",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontWeight: 700,
-            fontSize: 13,
-            flexShrink: 0,
-          }}>
-            {post.host.name?.charAt(0) ?? "?"}
-          </div>
-        )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          backgroundColor: "#78350f",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          fontWeight: 700,
+          fontSize: 13,
+          flexShrink: 0,
+        }}>
+          {post.host.name?.charAt(0) ?? "?"}
+        </div>
         <p style={{ fontSize: 13, color: "#1c1917", margin: 0, fontWeight: 600 }}>
           {post.host.name}
         </p>

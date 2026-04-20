@@ -69,26 +69,23 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
         />
       )}
 
-      {/* オーナー専用操作バー（削除を左・シェア/編集を右に統合） */}
+      {/* オーナー専用ボタン（編集・シェア） */}
       {isOwner && (
-        <div className="flex items-center justify-between gap-2">
-          <DeletePostButton postId={post.id} />
-          <div className="flex gap-2">
-            {userSns && (
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="flex items-center gap-1.5 text-sm font-medium text-stone-600 bg-white hover:bg-stone-50 border border-stone-200 px-4 py-2 rounded-full transition-colors"
-              >
-                📤 シェアする
-              </button>
-            )}
+        <div className="flex justify-end gap-2">
+          {userSns && (
             <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-full transition-colors"
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-stone-600 bg-white hover:bg-stone-50 border border-stone-200 px-4 py-2 rounded-full transition-colors"
             >
-              ✏️ 編集する
+              📤 シェアする
             </button>
-          </div>
+          )}
+          <button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-1.5 text-sm font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-full transition-colors"
+          >
+            ✏️ 編集する
+          </button>
         </div>
       )}
 
