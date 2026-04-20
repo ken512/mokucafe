@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
@@ -45,9 +46,15 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     setIsGenerating(true)
     setGenerateError(null)
     try {
+      // 認証トークンを取得して Authorization ヘッダーに付与する
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch("/api/ai/generate-share", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
         body: JSON.stringify({
           cafeName: post.cafeName,
           cafeAddress: post.cafeAddress,
