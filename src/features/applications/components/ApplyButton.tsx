@@ -36,11 +36,26 @@ const ApplyButton = ({ postId, isLoggedIn, isClosed }: Props) => {
     )
   }
 
-  // 申請完了
+  // 申請完了（楽観的更新で即時表示）
   if (status === "applied") {
     return (
       <div className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-bold text-center">
         ✅ 申請しました！オーナーの承認をお待ちください
+      </div>
+    )
+  }
+
+  // エラー時：再試行ボタンを表示
+  if (status === "error") {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-red-500 text-center">{errorMessage}</p>
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
+        >
+          もう一度申請する
+        </button>
       </div>
     )
   }
@@ -82,10 +97,9 @@ const ApplyButton = ({ postId, isLoggedIn, isClosed }: Props) => {
         </button>
         <button
           onClick={() => apply(message || undefined)}
-          disabled={status === "loading"}
-          className="flex-1 py-2.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
+          className="flex-1 py-2.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
         >
-          {status === "loading" ? "送信中..." : "申請する"}
+          申請する
         </button>
       </div>
     </div>
