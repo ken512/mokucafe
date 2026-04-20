@@ -31,7 +31,16 @@ const makeGetKey = (params: FilterParams) =>
 
 export const usePosts = (params: FilterParams = {}) => {
   const { data, error, isLoading, size, setSize, isValidating } =
-    useSWRInfinite<PostsResponse>(makeGetKey(params), fetcher)
+    useSWRInfinite<PostsResponse>(makeGetKey(params), fetcher, {
+      // タブ復帰時の再フェッチを無効化（チラつき防止）
+      revalidateOnFocus: false,
+      // 再接続時の再フェッチを無効化
+      revalidateOnReconnect: false,
+      // フィルター変更時に前のデータを保持して一覧が消えないようにする
+      keepPreviousData: true,
+      // 同一URLのリクエストを10秒間dedupする
+      dedupingInterval: 10000,
+    })
 
   const posts: Post[] = data ? data.flatMap((page) => page.posts) : []
   // 追加ページをロード中かどうか（初回ロードとは区別する）
