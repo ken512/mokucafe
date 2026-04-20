@@ -44,7 +44,7 @@ export const POST = async (request: NextRequest) => {
 
   // 全対象ユーザーに通知レコードを一括作成する
   await prisma.notification.createMany({
-    data: users.map((user) => ({
+    data: users.map((user: { id: number }) => ({
       userId: user.id,
       type: "SYSTEM" as const,
       title,
