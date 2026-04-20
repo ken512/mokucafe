@@ -59,5 +59,6 @@ export const GET = async (request: NextRequest) => {
     response.headers.set("Location", `${origin}/?new_user=1`)
   }
 
+
   return response
 }

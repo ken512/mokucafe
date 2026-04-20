@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import PostCard from "./PostCard"
 import { usePosts } from "../hooks/usePosts"
 import ErrorAlert from "@/components/ui/ErrorAlert"
+import { ApplicationStatus } from "@/features/applications/types"
 
 // スケルトンカード（ローディング時に表示）
 const SkeletonCard = () => (
@@ -20,12 +21,21 @@ const SkeletonCard = () => (
 type Props = {
   q?: string
   tag?: string
+  // postId → 自分の申請ステータス のmap（未ログイン時は空）
+  myApplications?: Record<number, ApplicationStatus>
+  // 申請ステータスでフィルタリング（指定時は自分の申請済み投稿のみ表示）
+  applicationStatusFilter?: ApplicationStatus
 }
 
 // 募集一覧（無限スクロール対応）
-const PostList = ({ q, tag }: Props) => {
+const PostList = ({ q, tag, myApplications = {}, applicationStatusFilter }: Props) => {
   const { posts, isLoading, error, isLoadingMore, hasMore, loadMore } =
     usePosts({ q, tag })
+
+  // 申請ステータスフィルターが指定されている場合はクライアント側で絞り込む
+  const filteredPosts = applicationStatusFilter
+    ? posts.filter((post) => myApplications[post.id] === applicationStatusFilter)
+    : posts
 
   // センチネルdivがビューポートに入ったら次のページを取得する
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -59,20 +69,28 @@ const PostList = ({ q, tag }: Props) => {
     return <ErrorAlert message="募集の取得に失敗しました" />
   }
 
-  if (posts.length === 0) {
+  if (filteredPosts.length === 0) {
     return (
       <div className="text-center py-16 text-stone-400">
         <p className="text-4xl mb-3">☕</p>
-        <p className="text-sm">今日の募集はまだありません</p>
-        <p className="text-sm mt-1">最初の募集を投稿してみましょう！</p>
+        <p className="text-sm">
+          {applicationStatusFilter ? "該当する募集はありません" : "今日の募集はまだありません"}
+        </p>
+        {!applicationStatusFilter && (
+          <p className="text-sm mt-1">最初の募集を投稿してみましょう！</p>
+        )}
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+      {filteredPosts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          myApplicationStatus={myApplications[post.id]}
+        />
       ))}
 
       {/* センチネル：このdivが画面内に入ったら loadMore を発火する */}

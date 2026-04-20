@@ -2,7 +2,6 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
-import Header from "@/components/ui/Header"
 import ProfilePageClient from "@/features/profile/components/ProfilePageClient"
 
 // プロフィールページ（認証必須）
@@ -35,7 +34,6 @@ const ProfilePage = async () => {
 
   return (
     <div className="min-h-screen bg-stone-100">
-      <Header />
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
         {/* 戻るリンク */}
         <Link

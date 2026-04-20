@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Header from "@/components/ui/Header"
 import ButtonLink from "@/components/ui/ButtonLink"
 import PostsPageClient from "@/features/posts/components/PostsPageClient"
 
@@ -7,7 +6,6 @@ import PostsPageClient from "@/features/posts/components/PostsPageClient"
 const PostsPage = () => {
   return (
     <div className="min-h-screen bg-stone-100">
-      <Header />
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
         {/* 戻るリンク */}
         <Link

@@ -22,7 +22,6 @@ const isStandalone = (): boolean =>
 
 const DISMISSED_KEY = "notification_banner_dismissed"
 
-// 通知設定を促すバナー（ログイン済みユーザー向け）
 // バナーを表示すべきプラットフォームを判定する（クライアント初回レンダリング時のみ呼ばれる）
 const getInitialPlatform = (): Platform | null => {
   if (typeof window === "undefined") return null
@@ -36,6 +35,7 @@ const getInitialPlatform = (): Platform | null => {
   return p
 }
 
+// 通知設定を促すバナー（ログイン済みユーザー向け）
 const NotificationSetupBanner = () => {
   // lazy initializer でマウント時に一度だけ判定し、useEffect 内の setState を避ける
   const [platform, setPlatform] = useState<Platform | null>(getInitialPlatform)

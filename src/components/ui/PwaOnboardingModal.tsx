@@ -39,6 +39,7 @@ const PwaOnboardingModal = () => {
       window.history.replaceState({}, "", cleanUrl)
     }
 
+
     // フラグがある場合のみ処理する
     if (!localStorage.getItem("pwa_onboarding_pending")) return
 
