@@ -123,7 +123,7 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
 
         {/* 候補ドロップダウン */}
         {isOpen && suggestions.length > 0 && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-md overflow-hidden">
+          <ul className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-md overflow-hidden max-h-72 overflow-y-auto">
             {/* Near by モード時のラベル */}
             {isNearby && (
               <li className="px-4 py-2 text-xs text-amber-800 font-medium bg-amber-50 border-b border-amber-100">

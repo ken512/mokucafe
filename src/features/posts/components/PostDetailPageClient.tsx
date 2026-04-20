@@ -5,6 +5,9 @@ import PostDetail from "./PostDetail"
 import EditPostForm from "./EditPostForm"
 import ShareModal from "./ShareModal"
 import Dialog from "@/components/ui/Dialog"
+import ApplicationList from "@/features/applications/components/ApplicationList"
+import ParticipantList from "@/features/applications/components/ParticipantList"
+import DeletePostButton from "./DeletePostButton"
 import { Post } from "../types"
 
 type UserSns = {
@@ -87,6 +90,23 @@ const PostDetailPageClient = ({ initialPost, isLoggedIn, isOwner, userSns }: Pro
       )}
 
       <PostDetail post={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+
+      {/* 承認済み参加者一覧（定員満了時はオーナーと参加確定済みユーザーのみ表示） */}
+      {isLoggedIn && (
+        <ParticipantList
+          postId={post.id}
+          isOwner={isOwner}
+          isFull={post.applicantCount >= post.capacity}
+        />
+      )}
+
+      {/* オーナー向け申請一覧 */}
+      {isOwner && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+          <p className="text-sm font-bold text-stone-800">参加申請一覧</p>
+          <ApplicationList postId={post.id} />
+        </div>
+      )}
     </div>
   )
 }

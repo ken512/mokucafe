@@ -9,10 +9,11 @@ import { createClient } from "@/lib/supabase/client"
 type Props = {
   name: string
   avatarUrl: string | null
+  isAdmin?: boolean
 }
 
 // ヘッダー右上のユーザーアイコン＋プルダウンメニュー
-const UserMenu = ({ name, avatarUrl }: Props) => {
+const UserMenu = ({ name, avatarUrl, isAdmin = false }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -96,6 +97,15 @@ const UserMenu = ({ name, avatarUrl }: Props) => {
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
           >
             👤 プロフィール
+          </Link>
+
+          {/* 管理者ログイン済みはダッシュボード、未ログインはログインページへ */}
+          <Link
+            href={isAdmin ? "/admin/dashboard" : "/admin"}
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            ⚙️ 管理画面
           </Link>
 
           <hr className="border-stone-100 my-1" />
