@@ -30,6 +30,16 @@ const PwaOnboardingModal = () => {
   const [permissionGranted, setPermissionGranted] = useState(false)
 
   useEffect(() => {
+    // メール確認フロー経由の新規ユーザー：URLパラメータからフラグをセットしてURLをクリーンアップする
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("new_user") === "1") {
+      localStorage.setItem("pwa_onboarding_pending", "1")
+      params.delete("new_user")
+      const cleanUrl = params.toString() ? `?${params}` : window.location.pathname
+      window.history.replaceState({}, "", cleanUrl)
+    }
+
+
     // フラグがある場合のみ処理する
     if (!localStorage.getItem("pwa_onboarding_pending")) return
 

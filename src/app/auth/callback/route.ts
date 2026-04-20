@@ -55,9 +55,10 @@ export const GET = async (request: NextRequest) => {
     await prisma.user.create({
       data: { supabaseUserId, name: displayName },
     })
+    // 新規ユーザーはクライアント側でウェルカム通知を作成するためにリダイレクト先を変更する
+    response.headers.set("Location", `${origin}/?new_user=1`)
   }
 
-  // ウェルカム通知はプラットフォーム検出後にクライアント側（PwaOnboardingModal）で作成する
 
   return response
 }

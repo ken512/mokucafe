@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
@@ -13,6 +14,11 @@ const Header = async () => {
 
   const isGuest = user?.is_anonymous === true
   const isLoggedIn = !!user && !isGuest
+
+  // 管理者Cookieを確認する
+  const cookieStore = await cookies()
+  const adminToken = cookieStore.get("admin_token")?.value
+  const isAdmin = !!adminToken && adminToken === process.env.ADMIN_SECRET
 
   // ログイン済みユーザーのプロフィール（アバター表示に使用）
   let userProfile: { name: string; avatarUrl: string | null } | null = null
@@ -68,6 +74,7 @@ const Header = async () => {
               <UserMenu
                 name={userProfile.name}
                 avatarUrl={userProfile.avatarUrl}
+                isAdmin={isAdmin}
               />
             </>
           )}

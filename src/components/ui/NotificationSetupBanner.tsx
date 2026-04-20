@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 type Platform = "ios-browser" | "android" | "other"
@@ -22,34 +22,28 @@ const isStandalone = (): boolean =>
 
 const DISMISSED_KEY = "notification_banner_dismissed"
 
+// バナーを表示すべきプラットフォームを判定する（クライアント初回レンダリング時のみ呼ばれる）
+const getInitialPlatform = (): Platform | null => {
+  if (typeof window === "undefined") return null
+  if (localStorage.getItem(DISMISSED_KEY)) return null
+
+  const p = detectPlatform()
+  if (p === "other") return null
+  if (p === "ios-browser" && isStandalone()) return null
+  if (p === "android" && "Notification" in window && Notification.permission === "granted") return null
+
+  return p
+}
+
 // 通知設定を促すバナー（ログイン済みユーザー向け）
 const NotificationSetupBanner = () => {
-  const [platform, setPlatform] = useState<Platform | null>(null)
-  const [isDismissed, setIsDismissed] = useState(true) // 初期は非表示（クライアントで判定後に切り替え）
+  // lazy initializer でマウント時に一度だけ判定し、useEffect 内の setState を避ける
+  const [platform, setPlatform] = useState<Platform | null>(getInitialPlatform)
   const [showIosSteps, setShowIosSteps] = useState(false)
-
-  useEffect(() => {
-    // 既に閉じた場合は表示しない
-    if (localStorage.getItem(DISMISSED_KEY)) return
-
-    const p = detectPlatform()
-
-    // iOS でホーム画面から起動済み → 通知は既に設定可能 → 表示しない
-    if (p === "ios-browser" && isStandalone()) return
-
-    // Android で既に通知許可済み → 表示しない
-    if (p === "android" && "Notification" in window && Notification.permission === "granted") return
-
-    // PC（other）は対象外
-    if (p === "other") return
-
-    setPlatform(p)
-    setIsDismissed(false)
-  }, [])
 
   const dismiss = () => {
     localStorage.setItem(DISMISSED_KEY, "1")
-    setIsDismissed(true)
+    setPlatform(null)
   }
 
   // Android: 通知許可ボタンを押す
@@ -94,7 +88,7 @@ const NotificationSetupBanner = () => {
     }
   }
 
-  if (isDismissed || !platform) return null
+  if (!platform) return null
 
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col gap-3">
