@@ -75,6 +75,23 @@ export const PATCH = async (request: NextRequest) => {
     return NextResponse.json({ error: "自己紹介は500文字以内で入力してください" }, { status: 400 })
   }
 
+  // SNS URL は https:// のみ許可（javascript: などの XSS 起点を防ぐ）
+  const urlFields = ["xUrl", "instagramUrl", "threadsUrl", "githubUrl", "avatarUrl"] as const
+  for (const field of urlFields) {
+    const val = updateData[field]
+    if (typeof val === "string") {
+      try {
+        const parsed = new URL(val)
+        if (parsed.protocol !== "https:") throw new Error()
+      } catch {
+        return NextResponse.json(
+          { error: `${field} は https:// で始まるURLを入力してください` },
+          { status: 400 }
+        )
+      }
+    }
+  }
+
   try {
     const user = await prisma.user.update({
       where: { id: auth.userId },

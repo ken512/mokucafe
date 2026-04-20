@@ -5,7 +5,7 @@ import { PlaceSuggestion } from "@/app/api/places/autocomplete/route"
 
 type Location = { lat: number; lng: number }
 
-// input は外部（react-hook-form の Controller）から渡す
+// input は外部から渡す
 export const usePlacesAutocomplete = (input: string) => {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
   // 現在地取得後に Near by Search で取得した近くのカフェ一覧

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { CreatePostRequest, CreatePostResponse } from "../types"
 import { compressImage, validateVideoSize, validateFileType } from "../utils/compressImage"
@@ -31,14 +30,16 @@ const uploadFile = async (
 type CreatePostInput = Omit<CreatePostRequest, "mediaUrls"> & {
   images: File[]     // 画像ファイル（最大2枚）
   video: File | null // 動画ファイル（最大1本）
+  endDate: string    // 作業終了日時（ISO8601）
 }
 
 // 募集投稿作成 hook
 export const useCreatePost = () => {
-  const router = useRouter()
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 投稿成功時に遷移先IDを保持する（nullのときは未完了）
+  const [successPostId, setSuccessPostId] = useState<number | null>(null)
 
   const createPost = async ({ images, video, ...values }: CreatePostInput) => {
     setIsLoading(true)
@@ -85,8 +86,8 @@ export const useCreatePost = () => {
       }
 
       const data: CreatePostResponse = await res.json()
-      // 投稿詳細ページへ遷移する
-      router.push(`/posts/${data.post.id}`)
+      // 成功IDをセットする（フォーム側でダイアログを表示してから遷移する）
+      setSuccessPostId(data.post.id)
     } catch (e) {
       setError(e instanceof Error ? e.message : "通信エラーが発生しました。時間をおいて再度お試しください")
     } finally {
@@ -94,5 +95,5 @@ export const useCreatePost = () => {
     }
   }
 
-  return { createPost, isLoading, error }
+  return { createPost, isLoading, error, successPostId }
 }

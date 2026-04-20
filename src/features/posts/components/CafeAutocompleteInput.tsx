@@ -80,20 +80,25 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
           type="button"
           onClick={locateMe}
           disabled={isLocating}
-          className="flex items-center gap-1 text-xs text-amber-900 hover:text-amber-700 disabled:opacity-50 transition-colors"
+          className={[
+            "flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50",
+            isLocationSet
+              ? "bg-amber-900 text-white border-amber-900"
+              : "text-stone-600 border-stone-200 hover:bg-stone-50",
+          ].join(" ")}
         >
-          {isLocating ? (
-            "取得中..."
-          ) : (
-            <>
-              <span>📍</span>
-              <span>{isLocationSet ? "現在地設定済み" : "現在地から探す"}</span>
-            </>
-          )}
+          <span>📍</span>
+          <span>
+            {isLocating
+              ? "取得中..."
+              : isLocationSet
+                ? "現在地設定済み"
+                : "現在地から探す"}
+          </span>
         </button>
       </div>
 
-      {/* 入力欄（react-hook-form の value/onChange と接続済み） */}
+      {/* カフェ名入力欄（react-hook-form の value/onChange と接続済み） */}
       <div className="relative">
         <input
           id="cafeName"
@@ -118,7 +123,7 @@ const CafeAutocompleteInput = ({ value, onChange, onSelect, error }: Props) => {
 
         {/* 候補ドロップダウン */}
         {isOpen && suggestions.length > 0 && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-md overflow-hidden">
+          <ul className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-md overflow-hidden max-h-72 overflow-y-auto">
             {/* Near by モード時のラベル */}
             {isNearby && (
               <li className="px-4 py-2 text-xs text-amber-800 font-medium bg-amber-50 border-b border-amber-100">

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Button from "./Button"
 
@@ -35,8 +36,11 @@ const Dialog = ({
   variant = "info",
   closeLabel = "OK",
 }: Props) => {
-  // SSR時はdocumentが存在しないためレンダリングしない
-  if (!isOpen || typeof window === "undefined") return null
+  // ハイドレーション後にのみ Portal を描画する（SSR と不一致を防ぐ）
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  if (!mounted || !isOpen) return null
 
   return createPortal(
     <div

@@ -46,6 +46,7 @@ export const GET = async (request: NextRequest) => {
     })
   } catch (e) {
     console.error("[places/embed] fetch error:", e)
-    return new Response(`地図の取得に失敗しました: ${String(e)}`, { status: 500 })
+    console.error("[places/embed] fetch error:", e)
+    return new Response("地図の取得に失敗しました", { status: 500 })
   }
 }

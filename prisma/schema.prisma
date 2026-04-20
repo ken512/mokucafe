@@ -20,8 +20,10 @@ model User {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  posts        Post[]
-  applications Application[]
+  posts             Post[]
+  applications      Application[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -34,7 +36,7 @@ model Post {
   cafeAddress  String?       // カフェの住所
   cafePlaceId  String?       // Google Places の placeId（地図の正確なピン留めに使用）
   date         DateTime      // 作業開始日時
-  endDate      DateTime?     // 作業終了日時（任意）
+  endDate      DateTime?     // 作業終了日時（nullの場合は終了時間なし）
   capacity     Int           // 募集人数
   description  String        // 募集内容・説明
   tags         String[]      // 雰囲気タグ（例：["静かに作業", "会話OK"]）
@@ -43,8 +45,9 @@ model Post {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications Application[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications  Application[]
+  notifications Notification[]
 
   // 一覧取得（status + 降順）・テキスト検索（cafeName）用インデックス
   @@index([status, createdAt(sort: Desc)])
@@ -70,6 +73,46 @@ model Application {
   @@map("applications")
 }
 
+// アプリ内通知
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  title     String
+  body      String
+  postId    Int?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// Web Push 購読情報（端末ごとに保持）
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
+
+enum NotificationType {
+  NEW_APPLICATION      // オーナー: 新規申請
+  APPLICATION_APPROVED // 申請者: 承認
+  APPLICATION_REJECTED // 申請者: 却下
+  ATTENDANCE_CONFIRMED // オーナー: 参加確定
+  SYSTEM               // システム通知（ウェルカム・案内など）
+}
+
 enum PostStatus {
   OPEN    // 募集中
   CLOSED  // 締め切り
@@ -77,7 +120,8 @@ enum PostStatus {
 }
 
 enum ApplicationStatus {
-  PENDING   // 申請中
-  APPROVED  // 承認済み
-  REJECTED  // 却下
+  PENDING    // 申請中
+  APPROVED   // 承認済み（参加未確定）
+  ATTENDING  // 参加確定（ユーザー自身が確認）
+  REJECTED   // 却下
 }

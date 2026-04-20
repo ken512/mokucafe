@@ -37,6 +37,7 @@ export const GET = async (
         cafeAddress: post.cafeAddress,
         cafePlaceId: post.cafePlaceId,
         date: post.date.toISOString(),
+        endDate: post.endDate?.toISOString() ?? null,
         capacity: post.capacity,
         description: post.description,
         tags: post.tags,
@@ -88,12 +89,13 @@ export const PATCH = async (
       return NextResponse.json({ error: "他のユーザーの投稿は編集できません" }, { status: 403 })
     }
 
-    const { date, ...rest } = validation.data
+    const { date, endDate, ...rest } = validation.data
     const updated = await prisma.post.update({
       where: { id: postId },
       data: {
         ...rest,
         ...(date ? { date: new Date(date) } : {}),
+        ...(endDate ? { endDate: new Date(endDate) } : {}),
       },
       include: {
         user: { select: { name: true, avatarUrl: true } },
@@ -108,6 +110,7 @@ export const PATCH = async (
         cafeAddress: updated.cafeAddress,
         cafePlaceId: updated.cafePlaceId,
         date: updated.date.toISOString(),
+        endDate: updated.endDate?.toISOString() ?? null,
         capacity: updated.capacity,
         description: updated.description,
         tags: updated.tags,

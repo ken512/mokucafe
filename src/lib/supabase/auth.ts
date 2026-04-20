@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { createClient as createServerClient } from "@/lib/supabase/server"
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -43,10 +44,23 @@ export const authenticateRequest = async (request: NextRequest): Promise<AuthRes
     return { success: false, message: "トークンが無効です" }
   }
 
+  // 匿名ユーザーは書き込み系APIの使用を禁止する
+  if (data.user.is_anonymous) {
+    return { success: false, message: "ゲストユーザーはこの操作を行えません。登録を行なってください。" }
+  }
+
   const userId = await resolveUserId(data.user.id)
   if (!userId) {
     return { success: false, message: "ユーザーが見つかりません" }
   }
 
   return { success: true, userId }
+}
+
+// Cookie ベースのセッション有無を確認する（Places API など読み取り系プロキシ用）
+// ブラウザリクエストは自動的にクッキーを送るので Bearer トークン不要
+export const requireSession = async (): Promise<boolean> => {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return !!user
 }

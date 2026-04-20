@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
-import Header from "@/components/ui/Header"
 import PostDetailPageClient from "@/features/posts/components/PostDetailPageClient"
 import { Post } from "@/features/posts/types"
 
@@ -34,12 +33,21 @@ const PostDetailPage = async ({ params }: Props) => {
   // ログイン中ユーザーのSupabase UUIDと投稿者のIDが一致する場合に投稿者と判定する
   const isOwner = isLoggedIn && user?.id === postRaw.user.supabaseUserId
 
+  // オーナーの SNS リンクをシェアボタン表示に使う
+  const userSns = isOwner
+    ? await prisma.user.findUnique({
+        where: { supabaseUserId: user!.id },
+        select: { xUrl: true, threadsUrl: true, instagramUrl: true },
+      })
+    : null
+
   const post: Post = {
     id: postRaw.id,
     cafeName: postRaw.cafeName,
     cafeAddress: postRaw.cafeAddress,
     cafePlaceId: postRaw.cafePlaceId,
     date: postRaw.date.toISOString(),
+    endDate: postRaw.endDate?.toISOString() ?? null,
     capacity: postRaw.capacity,
     description: postRaw.description,
     tags: postRaw.tags,
@@ -52,7 +60,6 @@ const PostDetailPage = async ({ params }: Props) => {
 
   return (
     <div className="min-h-screen bg-stone-100">
-      <Header />
       <main className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
         {/* 戻るリンク */}
         <Link
@@ -62,7 +69,12 @@ const PostDetailPage = async ({ params }: Props) => {
           ☕ ← もどる
         </Link>
 
-        <PostDetailPageClient initialPost={post} isLoggedIn={isLoggedIn} isOwner={isOwner} />
+        <PostDetailPageClient
+          initialPost={post}
+          isLoggedIn={isLoggedIn}
+          isOwner={isOwner}
+          userSns={userSns ?? undefined}
+        />
       </main>
     </div>
   )

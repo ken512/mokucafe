@@ -8,8 +8,19 @@ export const dynamic = "force-dynamic"
 
 const LIMIT = 10
 
+// 作業終了から24時間以上経過した投稿を非同期で削除する（レスポンスをブロックしない）
+const cleanupExpiredPosts = () => {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  prisma.post.deleteMany({
+    where: { endDate: { lt: oneDayAgo } },
+  }).catch((e) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
+}
+
 // GET /api/posts?cursor=<id>&limit=10&q=<検索>&tag=<タグ>
 export const GET = async (request: NextRequest) => {
+  // 一覧取得のついでに期限切れ投稿をバックグラウンドで削除する
+  cleanupExpiredPosts()
+
   const { searchParams } = request.nextUrl
   const cursor = searchParams.get("cursor")
   // カフェ名・説明文のあいまい検索キーワード
@@ -55,6 +66,7 @@ export const GET = async (request: NextRequest) => {
         cafeAddress: post.cafeAddress,
         cafePlaceId: post.cafePlaceId,
         date: post.date.toISOString(),
+        endDate: post.endDate?.toISOString() ?? null,
         capacity: post.capacity,
         description: post.description,
         tags: post.tags,
@@ -89,7 +101,7 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ errors: validation.errors }, { status: 400 })
   }
 
-  const { cafeName, cafeAddress, cafePlaceId, date, capacity, description, tags, mediaUrls } = validation.data
+  const { cafeName, cafeAddress, cafePlaceId, date, endDate, capacity, description, tags, mediaUrls } = validation.data
 
   try {
     const post = await prisma.post.create({
@@ -99,6 +111,7 @@ export const POST = async (request: NextRequest) => {
         cafeAddress,
         cafePlaceId,
         date: new Date(date),
+        endDate: new Date(endDate),
         capacity,
         description,
         tags,
@@ -118,6 +131,7 @@ export const POST = async (request: NextRequest) => {
           cafeAddress: post.cafeAddress,
           cafePlaceId: post.cafePlaceId,
           date: post.date.toISOString(),
+          endDate: post.endDate?.toISOString() ?? null,
           capacity: post.capacity,
           description: post.description,
           tags: post.tags,
