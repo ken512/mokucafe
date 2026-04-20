@@ -49,6 +49,9 @@ export const useSignup = () => {
           body: JSON.stringify({ name: displayName }),
         })
 
+        // PwaOnboardingModal でウェルカム通知を作成するためのフラグをセット
+        localStorage.setItem("pwa_onboarding_pending", "1")
+
         // メール確認不要の設定の場合：即ログインしてホームへ
         showDialog({
           title: "登録完了！",

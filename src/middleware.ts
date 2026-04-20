@@ -46,6 +46,17 @@ export const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(url)
   }
 
+  // 管理者ダッシュボードは admin_token Cookie がない場合はログインページへ
+  if (request.nextUrl.pathname.startsWith("/admin/dashboard")) {
+    const adminToken = request.cookies.get("admin_token")?.value
+    const adminSecret = process.env.ADMIN_SECRET
+    if (!adminToken || !adminSecret || adminToken !== adminSecret) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/admin"
+      return NextResponse.redirect(url)
+    }
+  }
+
   return supabaseResponse;
 }
 
