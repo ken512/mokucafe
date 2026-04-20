@@ -41,9 +41,17 @@ const NotificationBell = () => {
   }, [])
 
   useEffect(() => {
+    const supabase = createClient()
+    // セッション確立後に取得する（ページロード直後はgetSession()がnullを返す場合があるため）
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) fetchNotifications()
+    })
     fetchNotifications()
     const timer = setInterval(fetchNotifications, 30_000)
-    return () => clearInterval(timer)
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(timer)
+    }
   }, [fetchNotifications])
 
   // PwaOnboardingModal などから通知作成後に即時更新する
