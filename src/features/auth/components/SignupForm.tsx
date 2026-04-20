@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import Link from "next/link"
 import { useSignup } from "../hooks/useSignup"
@@ -8,6 +9,7 @@ import Button from "@/components/ui/Button"
 import FormField from "@/components/ui/FormField"
 import ErrorAlert from "@/components/ui/ErrorAlert"
 import Dialog from "@/components/ui/Dialog"
+import { generatePassword } from "@/utils/generatePassword"
 
 const SignupForm = () => {
   const { signup, isLoading, error, dialog, isOpen, closeDialog } = useSignup()
@@ -15,9 +17,31 @@ const SignupForm = () => {
     register,
     handleSubmit,
     getValues,
+    setValue,
     trigger,
     formState: { errors },
   } = useForm<SignupFormValues>()
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // パスワードを自動生成してフォームにセットする
+  const handleGeneratePassword = async () => {
+    const pwd = generatePassword(12)
+    setValue("password", pwd)
+    setValue("confirmPassword", pwd)
+    setShowPassword(true)
+    await trigger(["password", "confirmPassword"])
+  }
+
+  // 生成したパスワードをクリップボードにコピーする
+  const handleCopy = async () => {
+    const pwd = getValues("password")
+    if (!pwd) return
+    await navigator.clipboard.writeText(pwd)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <>
@@ -54,22 +78,65 @@ const SignupForm = () => {
           })}
         />
 
-        {/* パスワード：変更時にconfirmPasswordを再バリデート */}
-        <FormField
-          label="パスワード"
-          htmlFor="password"
-          type="password"
-          placeholder="••••••••"
-          errorMessage={errors.password?.message}
-          {...register("password", {
-            required: "パスワードを入力してください",
-            minLength: {
-              value: 6,
-              message: "パスワードは6文字以上で入力してください",
-            },
-            onChange: () => trigger("confirmPassword"),
-          })}
-        />
+        {/* パスワード */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-sm font-medium text-stone-700">
+              パスワード
+            </label>
+            <button
+              type="button"
+              onClick={handleGeneratePassword}
+              className="text-xs text-amber-900 font-medium hover:underline"
+            >
+              🔑 パスワードを自動生成する
+            </button>
+          </div>
+
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              className={`w-full rounded-xl border px-4 py-3 text-sm text-stone-800 pr-20 outline-none focus:ring-2 focus:ring-amber-900/30 transition ${
+                errors.password ? "border-red-400" : "border-stone-200"
+              }`}
+              {...register("password", {
+                required: "パスワードを入力してください",
+                minLength: {
+                  value: 8,
+                  message: "パスワードは8文字以上で入力してください",
+                },
+                onChange: () => trigger("confirmPassword"),
+              })}
+            />
+            {/* コピー・表示切替ボタン */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="text-stone-400 hover:text-stone-600 transition-colors"
+                title="コピー"
+              >
+                <span className="text-sm">{copied ? "✅" : "📋"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="text-stone-400 hover:text-stone-600 transition-colors"
+                title={showPassword ? "非表示" : "表示"}
+              >
+                <span className="text-sm">{showPassword ? "🙈" : "👁️"}</span>
+              </button>
+            </div>
+          </div>
+
+          {errors.password ? (
+            <p className="text-xs text-red-500">{errors.password.message}</p>
+          ) : (
+            <p className="text-xs text-stone-400">8文字以上で設定してください</p>
+          )}
+        </div>
 
         <FormField
           label="パスワード（確認）"

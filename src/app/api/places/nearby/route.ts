@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PlaceSuggestion } from "../autocomplete/route"
+import { requireSession } from "@/lib/supabase/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -16,6 +17,10 @@ type NearbyResponse = {
 
 // POST /api/places/nearby — 現在地周辺のカフェを取得する（カフェ特化 Nearby Search）
 export const POST = async (request: NextRequest) => {
+  if (!(await requireSession())) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+  }
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: "Places API が設定されていません" }, { status: 500 })
@@ -28,8 +33,8 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: "lat/lng が必要です" }, { status: 400 })
   }
 
-  // 検索半径（デフォルト 500m、最大 1000m）
-  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 500, 1000)
+  // 検索半径（デフォルト 200m、最大 1000m）
+  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 200, 1000)
 
   try {
     const res = await fetch(
@@ -43,7 +48,8 @@ export const POST = async (request: NextRequest) => {
         },
         body: JSON.stringify({
           includedTypes: ["cafe", "coffee_shop"],
-          maxResultCount: 10,
+          maxResultCount: 20,
+          rankPreference: "DISTANCE",
           languageCode: "ja",
           locationRestriction: {
             circle: {
