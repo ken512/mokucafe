@@ -8,11 +8,11 @@ export const dynamic = "force-dynamic"
 
 const LIMIT = 10
 
-// 作業終了から1時間以上経過した投稿を非同期で削除する（レスポンスをブロックしない）
+// 作業終了から24時間以上経過した投稿を非同期で削除する（レスポンスをブロックしない）
 const cleanupExpiredPosts = () => {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
   prisma.post.deleteMany({
-    where: { endDate: { lt: oneHourAgo } },
+    where: { endDate: { lt: oneDayAgo } },
   }).catch((e) => console.error("[cleanup] 期限切れ投稿の削除に失敗しました:", e))
 }
 

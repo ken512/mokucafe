@@ -33,8 +33,8 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: "lat/lng が必要です" }, { status: 400 })
   }
 
-  // 検索半径（デフォルト 500m、最大 1000m）
-  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 500, 1000)
+  // 検索半径（デフォルト 200m、最大 1000m）
+  const radius = Math.min(typeof body?.radius === "number" ? body.radius : 200, 1000)
 
   try {
     const res = await fetch(
@@ -48,7 +48,8 @@ export const POST = async (request: NextRequest) => {
         },
         body: JSON.stringify({
           includedTypes: ["cafe", "coffee_shop"],
-          maxResultCount: 10,
+          maxResultCount: 20,
+          rankPreference: "DISTANCE",
           languageCode: "ja",
           locationRestriction: {
             circle: {
