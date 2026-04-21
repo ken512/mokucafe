@@ -1,14 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useDialog } from "@/hooks/useDialog"
 import { LoginFormValues } from "../types"
 
 // ログイン処理hook
 export const useLogin = () => {
-  const router = useRouter()
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,8 +28,8 @@ export const useLogin = () => {
         title: "ログインしました！",
         message: "おかえりなさい ☕\nもくカフェへようこそ。",
         variant: "success",
-        // refresh() でサーバーコンポーネント（Header）を再レンダリングしてアイコンを表示する
-        onClose: () => { router.push("/"); router.refresh() },
+        // フルリロードでサーバーコンポーネント（Header）のキャッシュを確実にクリアする
+        onClose: () => { window.location.href = "/" },
       })
     } finally {
       setIsLoading(false)
