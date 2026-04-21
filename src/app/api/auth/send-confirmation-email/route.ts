@@ -54,12 +54,19 @@ export const POST = async (request: NextRequest) => {
 
   const html = await render(ConfirmEmail({ confirmUrl, displayName }))
 
-  const { error } = await resend.emails.send({
+  // デバッグ用：env と送信先を確認（問題解決後に削除する）
+  console.log("[send-confirmation-email] RESEND_API_KEY 設定:", !!process.env.RESEND_API_KEY)
+  console.log("[send-confirmation-email] RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL)
+  console.log("[send-confirmation-email] 送信先:", email)
+
+  const { data, error } = await resend.emails.send({
     from: `もくカフェ <${process.env.RESEND_FROM_EMAIL ?? "coffee@mockcafe.com"}>`,
     to: email,
     subject: "☕ もくカフェ — メールアドレスの確認",
     html,
   })
+
+  console.log("[send-confirmation-email] Resend result:", { data, error })
 
   if (error) {
     console.error("Resend 送信エラー:", error)
