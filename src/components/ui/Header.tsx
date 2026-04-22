@@ -1,23 +1,11 @@
 import Link from "next/link"
 import { cookies } from "next/headers"
-import { unstable_cache } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import ButtonLink from "./ButtonLink"
 import UserMenu from "./UserMenu"
 import GuestMenu from "./GuestMenu"
 import NotificationBell from "./NotificationBell"
-
-// ユーザープロフィールを30秒キャッシュする（毎ページアクセスごとのDB往復を削減）
-const getCachedUserProfile = unstable_cache(
-  async (supabaseUserId: string) =>
-    prisma.user.findUnique({
-      where: { supabaseUserId },
-      select: { name: true, avatarUrl: true },
-    }),
-  ["user-profile"],
-  { revalidate: 30, tags: ["user-profile"] }
-)
 
 // ヘッダー（認証状態に応じてUIを切り替えるサーバーコンポーネント）
 const Header = async () => {
@@ -35,7 +23,10 @@ const Header = async () => {
   // ログイン済みユーザーのプロフィール（アバター表示に使用）
   let userProfile: { name: string; avatarUrl: string | null } | null = null
   if (isLoggedIn) {
-    userProfile = await getCachedUserProfile(user.id)
+    userProfile = await prisma.user.findUnique({
+      where: { supabaseUserId: user.id },
+      select: { name: true, avatarUrl: true },
+    })
 
     // DBレコードがない場合は自動作成（メール確認コールバック失敗などの復旧）
     if (!userProfile) {
@@ -45,10 +36,13 @@ const Header = async () => {
         "ユーザー"
       try {
         await prisma.user.create({ data: { supabaseUserId: user.id, name } })
+        userProfile = await prisma.user.findUnique({
+          where: { supabaseUserId: user.id },
+          select: { name: true, avatarUrl: true },
+        })
       } catch {
         // 競合などは無視
       }
-      userProfile = await getCachedUserProfile(user.id)
     }
   }
 
