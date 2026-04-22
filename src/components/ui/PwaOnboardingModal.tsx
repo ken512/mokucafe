@@ -53,12 +53,7 @@ const PwaOnboardingModal = () => {
     const p = detectPlatform()
     setPlatform(p)
 
-    // PC はモーダルを表示しないが、ウェルカム通知は作成する
-    if (p === "other") {
-      localStorage.removeItem("pwa_onboarding_pending")
-      createWelcomeNotification("other")
-      return
-    }
+    // PC もウェルカムモーダルを表示する
 
     // iOS でスタンドアロン済みはモーダルを表示しないが、ウェルカム通知は作成する
     if (p === "ios" && isStandalone()) {
@@ -177,13 +172,26 @@ const PwaOnboardingModal = () => {
 
         {/* 説明 */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col gap-2">
-          <p className="text-sm font-bold text-amber-900">🔔 通知を受け取るには設定が必要です</p>
-          <p className="text-xs text-stone-700 leading-relaxed">
-            参加申請・承認・却下などをスマホにお知らせします。{"\n"}
-            {platform === "ios"
-              ? "iOSでは「ホーム画面に追加」してから起動することで通知が届くようになります。"
-              : "通知を許可するだけで届くようになります。"}
-          </p>
+          {platform === "other" ? (
+            <>
+              <p className="text-sm font-bold text-amber-900">☕ もくカフェへようこそ！</p>
+              <p className="text-xs text-stone-700 leading-relaxed">
+                カフェで作業仲間を見つけるアプリです。{"\n"}
+                募集を投稿したり、近くのカフェで作業中の人に参加申請できます。{"\n"}
+                通知ベル（🔔）で申請・承認のお知らせを確認できます。
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-amber-900">🔔 通知を受け取るには設定が必要です</p>
+              <p className="text-xs text-stone-700 leading-relaxed">
+                参加申請・承認・却下などをスマホにお知らせします。{"\n"}
+                {platform === "ios"
+                  ? "iOSでは「ホーム画面に追加」してから起動することで通知が届くようになります。"
+                  : "通知を許可するだけで届くようになります。"}
+              </p>
+            </>
+          )}
         </div>
 
         {/* iOS: ホーム画面追加手順 */}
