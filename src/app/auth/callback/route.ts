@@ -51,12 +51,22 @@ export const GET = async (request: NextRequest) => {
     select: { id: true },
   })
 
+  // モバイルはメールアプリの In-App Browser で開くため Cookie が分離される
+  // → ログインページにリダイレクトして明示的にログインさせる
+  const ua = request.headers.get("user-agent") ?? ""
+  const isMobile = /iphone|ipad|ipod|android/i.test(ua)
+
   if (!existing) {
     await prisma.user.create({
       data: { supabaseUserId, name: displayName },
     })
-    // 新規ユーザーはクライアント側でウェルカム通知を作成するためにリダイレクト先を変更する
-    response.headers.set("Location", `${origin}/?new_user=1`)
+    const newUserRedirect = isMobile
+      ? `${origin}/login?confirmed=1`
+      : `${origin}/?new_user=1`
+    response.headers.set("Location", newUserRedirect)
+  } else if (isMobile) {
+    // 既存ユーザーがモバイルで再確認した場合もログインページへ
+    response.headers.set("Location", `${origin}/login?confirmed=1`)
   }
 
 
