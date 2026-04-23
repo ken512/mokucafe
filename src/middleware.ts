@@ -51,7 +51,7 @@ export const middleware = async (request: NextRequest) => {
   if (request.nextUrl.pathname.startsWith("/admin/dashboard")) {
     const adminToken = request.cookies.get("admin_token")?.value
     const adminSecret = process.env.ADMIN_SECRET
-    if (!adminToken || !adminSecret || !verifyAdminToken(adminToken, adminSecret)) {
+    if (!adminToken || !adminSecret || !await verifyAdminToken(adminToken, adminSecret)) {
       const url = request.nextUrl.clone()
       url.pathname = "/admin"
       return NextResponse.redirect(url)

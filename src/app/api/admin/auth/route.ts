@@ -21,7 +21,7 @@ export const POST = async (request: NextRequest) => {
   }
 
   // ADMIN_SECRET そのものではなく HMAC 署名済みトークンを Cookie に保存する
-  const token = createAdminToken(adminSecret)
+  const token = await createAdminToken(adminSecret)
   const response = NextResponse.json({ ok: true })
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
