@@ -11,14 +11,20 @@ type Props = {
 const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref) => {
   const isPortrait = orientation === "portrait"
 
-  // 日時フォーマット
+  // 日時フォーマット（JST固定）
+  const tz = "Asia/Tokyo"
+  const toJST = (iso: string) => new Date(new Date(iso).toLocaleString("en-US", { timeZone: tz }))
   const formatDate = (iso: string) => {
-    const d = new Date(iso)
+    const d = toJST(iso)
     return `${d.getMonth() + 1}/${d.getDate()}（${["日","月","火","水","木","金","土"][d.getDay()]}） ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+  }
+  const formatTime = (iso: string) => {
+    const d = toJST(iso)
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
   }
 
   const dateStr = formatDate(post.date)
-  const endStr = post.endDate ? `〜${String(new Date(post.endDate).getHours()).padStart(2, "0")}:${String(new Date(post.endDate).getMinutes()).padStart(2, "0")}` : ""
+  const endStr = post.endDate ? `〜${formatTime(post.endDate)}` : ""
 
   return (
     <div

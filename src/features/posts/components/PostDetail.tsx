@@ -16,16 +16,16 @@ type Props = {
   isOwner: boolean
 }
 
-// "2026-04-11T14:00:00Z" → "2026/4/11 14:00"
-const formatDate = (isoString: string): string => {
-  const date = new Date(isoString)
-  const y = date.getFullYear()
-  const m = date.getMonth() + 1
-  const d = date.getDate()
-  const hh = String(date.getHours()).padStart(2, "0")
-  const mm = String(date.getMinutes()).padStart(2, "0")
-  return `${y}/${m}/${d} ${hh}:${mm}`
-}
+// "2026-04-11T14:00:00Z" → "2026/4/11 14:00"（JST固定でサーバー・クライアントの差異を防ぐ）
+const formatDate = (isoString: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(isoString))
 
 // 募集投稿の詳細表示コンポーネント
 // 表示順: メディア → 募集内容 → 地図 → ホスト → 申請/削除
