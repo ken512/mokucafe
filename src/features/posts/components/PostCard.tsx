@@ -32,15 +32,15 @@ type Props = {
   myApplicationStatus?: ApplicationStatus
 }
 
-// "2026-04-11T14:00:00Z" → "4/11 14:00"
-const formatDate = (isoString: string): string => {
-  const date = new Date(isoString)
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hours = String(date.getHours()).padStart(2, "0")
-  const minutes = String(date.getMinutes()).padStart(2, "0")
-  return `${month}/${day} ${hours}:${minutes}`
-}
+// "2026-04-11T14:00:00Z" → "4/11 14:00"（JST固定でサーバー・クライアントの差異を防ぐ）
+const formatDate = (isoString: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(isoString))
 
 const PostCard = ({ post, myApplicationStatus }: Props) => {
   const remainingSlots = useMemo(

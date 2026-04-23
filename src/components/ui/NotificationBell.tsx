@@ -4,11 +4,15 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-// コンポーネント外で定義してレンダリングごとの再生成を防ぐ
-const formatDate = (iso: string): string => {
-  const d = new Date(iso)
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-}
+// JST固定でサーバー・クライアントの差異を防ぐ
+const formatDate = (iso: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso))
 
 type AppNotification = {
   id: number
