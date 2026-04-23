@@ -20,7 +20,7 @@ const Header = async () => {
   const cookieStore = await cookies()
   const adminToken = cookieStore.get("admin_token")?.value
   const adminSecret = process.env.ADMIN_SECRET
-  const isAdmin = !!adminToken && !!adminSecret && verifyAdminToken(adminToken, adminSecret)
+  const isAdmin = !!adminToken && !!adminSecret && await verifyAdminToken(adminToken, adminSecret)
 
   // ログイン済みユーザーのプロフィール（アバター表示に使用）
   let userProfile: { name: string; avatarUrl: string | null } | null = null

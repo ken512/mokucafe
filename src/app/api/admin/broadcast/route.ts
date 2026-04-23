@@ -21,7 +21,7 @@ export const POST = async (request: NextRequest) => {
 
   const cookieStore = await cookies()
   const token = cookieStore.get("admin_token")?.value
-  if (!token || !verifyAdminToken(token, adminSecret)) {
+  if (!token || !await verifyAdminToken(token, adminSecret)) {
     return NextResponse.json({ error: "認証に失敗しました" }, { status: 401 })
   }
 
