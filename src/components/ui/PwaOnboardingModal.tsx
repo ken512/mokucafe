@@ -55,11 +55,15 @@ const PwaOnboardingModal = () => {
 
     // PC もウェルカムモーダルを表示する
 
-    // iOS でスタンドアロン済みはモーダルを表示しないが、ウェルカム通知は作成する
+    // iOS スタンドアロン済み：通知許可がまだなら許可モーダルを表示する
     if (p === "ios" && isStandalone()) {
-      localStorage.removeItem("pwa_onboarding_pending")
-      createWelcomeNotification("ios")
-      return
+      if (Notification.permission === "granted") {
+        // 既に許可済みなら即ウェルカム通知だけ作成して終了
+        localStorage.removeItem("pwa_onboarding_pending")
+        createWelcomeNotification("ios")
+        return
+      }
+      // 未許可（default / denied）はモーダルで許可ボタンを出す
     }
 
     setIsOpen(true)
@@ -105,6 +109,52 @@ const PwaOnboardingModal = () => {
     setIsOpen(false)
     // モーダルを閉じるときにウェルカム通知を作成する（プラットフォーム別の内容で）
     createWelcomeNotification(platform)
+  }
+
+  // iOS スタンドアロン: 通知許可 + Push 購読
+  const requestIosPermission = async () => {
+    if (!("Notification" in window)) { close(); return }
+    const permission = await Notification.requestPermission()
+    if (permission !== "granted") {
+      // 拒否された場合も閉じる（設定から変更する旨は別途案内）
+      close()
+      return
+    }
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js")
+      await navigator.serviceWorker.ready
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (vapidKey) {
+        const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4)
+        const b64 = (vapidKey + padding).replace(/-/g, "+").replace(/_/g, "/")
+        const raw = atob(b64)
+        const key = Uint8Array.from([...raw].map((c) => c.charCodeAt(0)))
+        let sub = await registration.pushManager.getSubscription()
+        if (!sub) {
+          sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: key as unknown as ArrayBuffer,
+          })
+        }
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify(sub),
+          })
+        }
+      }
+      setPermissionGranted(true)
+      await createWelcomeNotification("ios")
+    } catch (e: unknown) {
+      console.error("iOS Push購読エラー:", e)
+      close()
+    }
   }
 
   // Android: 通知許可 + Push 購読
@@ -194,8 +244,34 @@ const PwaOnboardingModal = () => {
           )}
         </div>
 
-        {/* iOS: ホーム画面追加手順 */}
-        {platform === "ios" && (
+        {/* iOS: スタンドアロン済み → 通知許可ボタン */}
+        {platform === "ios" && isStandalone() && (
+          <div className="flex flex-col gap-3">
+            {permissionGranted ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                <p className="text-sm font-bold text-green-800">✅ 通知が設定されました！</p>
+              </div>
+            ) : (
+              <>
+                {Notification.permission === "denied" && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                    <p className="text-xs text-red-700">通知が拒否されています。設定アプリ → 通知 → もくカフェ から許可してください。</p>
+                  </div>
+                )}
+                <button
+                  onClick={requestIosPermission}
+                  disabled={Notification.permission === "denied"}
+                  className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                >
+                  🔔 通知を許可する
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* iOS: 未インストール → ホーム画面追加手順 */}
+        {platform === "ios" && !isStandalone() && (
           <ol className="flex flex-col gap-3">
             {IOS_STEPS.map((step, i) => (
               <li key={i} className="flex items-start gap-3">
