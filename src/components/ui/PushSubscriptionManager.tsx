@@ -22,24 +22,23 @@ const PushSubscriptionManager = () => {
       const registration = await navigator.serviceWorker.register("/sw.js")
       await navigator.serviceWorker.ready
 
-      // 既に購読済みならスキップ
-      const existing = await registration.pushManager.getSubscription()
-      if (existing) return
-
-      // 通知許可を求める
-      const permission = await Notification.requestPermission()
-      if (permission !== "granted") return
-
-      // Push 購読を作成する
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!vapidKey) return
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as ArrayBuffer,
-      })
+      // 通知許可を求める（未許可なら購読不可）
+      const permission = await Notification.requestPermission()
+      if (permission !== "granted") return
 
-      // 購読情報をサーバーに送信する
+      // ブラウザの既存購読を取得、なければ新規作成する
+      let subscription = await registration.pushManager.getSubscription()
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as ArrayBuffer,
+        })
+      }
+
+      // 既存購読でも DB に未登録の可能性があるため毎回 upsert する
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return

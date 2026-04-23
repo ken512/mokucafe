@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import { verifyAdminToken } from "@/lib/adminToken"
+import { sendPush } from "@/lib/webpush"
 
 export const dynamic = "force-dynamic"
 
@@ -49,6 +50,13 @@ export const POST = async (request: NextRequest) => {
       body: messageBody,
     })),
   })
+
+  // Web Push 送信（失敗しても DB 通知は成功とする）
+  await Promise.allSettled(
+    users.map((user: { id: number }) =>
+      sendPush(user.id, { title, body: messageBody })
+    )
+  )
 
   return NextResponse.json({ ok: true, sent: users.length })
 }
