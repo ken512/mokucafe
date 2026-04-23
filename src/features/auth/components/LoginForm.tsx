@@ -9,8 +9,10 @@ import FormField from "@/components/ui/FormField"
 import ErrorAlert from "@/components/ui/ErrorAlert"
 import Dialog from "@/components/ui/Dialog"
 
-const LoginForm = () => {
-  const { login, isLoading, error, dialog, isOpen, closeDialog } = useLogin()
+type Props = { redirectTo?: string }
+
+const LoginForm = ({ redirectTo }: Props) => {
+  const { login, isLoading, error, dialog, isOpen, closeDialog } = useLogin(redirectTo)
   const {
     register,
     handleSubmit,
