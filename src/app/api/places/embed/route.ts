@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server"
+import { requireSession } from "@/lib/supabase/auth"
 
 export const dynamic = "force-dynamic"
 
 // GET /api/places/embed?address=xxx&cafeName=xxx&placeId=xxx
 // Maps Static API をサーバー経由でプロキシする（APIキーをブラウザに露出しない）
 export const GET = async (request: NextRequest) => {
+  if (!(await requireSession())) {
+    return new Response("認証が必要です", { status: 401 })
+  }
   const { searchParams } = request.nextUrl
   const address = searchParams.get("address")
   const cafeName = searchParams.get("cafeName") ?? ""
