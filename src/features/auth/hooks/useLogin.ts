@@ -6,7 +6,7 @@ import { useDialog } from "@/hooks/useDialog"
 import { LoginFormValues } from "../types"
 
 // ログイン処理hook
-export const useLogin = () => {
+export const useLogin = (redirectTo = "/") => {
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +29,7 @@ export const useLogin = () => {
         message: "おかえりなさい ☕\nもくカフェへようこそ。",
         variant: "success",
         // フルリロードでサーバーコンポーネント（Header）のキャッシュを確実にクリアする
-        onClose: () => { window.location.href = "/" },
+        onClose: () => { window.location.href = redirectTo },
       })
     } finally {
       setIsLoading(false)

@@ -40,7 +40,7 @@ const LoginPage = async ({ searchParams }: Props) => {
             <p className="text-sm text-stone-600">もくカフェへようこそ</p>
           </div>
 
-          <LoginForm />
+          <LoginForm redirectTo={isConfirmed ? "/?new_user=1" : "/"} />
           <GuestLoginButton />
         </div>
       </main>
