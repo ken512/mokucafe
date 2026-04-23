@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyAdminToken } from "@/lib/adminToken";
 
 // セッショントークンをリフレッシュし、Cookieを更新するミドルウェア
 export const middleware = async (request: NextRequest) => {
@@ -50,7 +51,7 @@ export const middleware = async (request: NextRequest) => {
   if (request.nextUrl.pathname.startsWith("/admin/dashboard")) {
     const adminToken = request.cookies.get("admin_token")?.value
     const adminSecret = process.env.ADMIN_SECRET
-    if (!adminToken || !adminSecret || adminToken !== adminSecret) {
+    if (!adminToken || !adminSecret || !verifyAdminToken(adminToken, adminSecret)) {
       const url = request.nextUrl.clone()
       url.pathname = "/admin"
       return NextResponse.redirect(url)

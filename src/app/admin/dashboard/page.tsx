@@ -19,15 +19,10 @@ const AdminDashboardPage = () => {
     setResult(null)
     setError(null)
 
-    const adminSecret = prompt("管理者パスワードを入力してください")
-    if (!adminSecret) { setIsSending(false); return }
-
+    // Cookie 認証に統一（prompt() 廃止 / Bearer トークン廃止）
     const res = await fetch("/api/admin/broadcast", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${adminSecret}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, body }),
     })
 

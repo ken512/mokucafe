@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
+import { verifyAdminToken } from "@/lib/adminToken"
 
 export const dynamic = "force-dynamic"
 
 type BroadcastBody = {
   title: string
   body: string
-  // 省略時は全ユーザーに送信、指定時は対象ユーザーのみ
   userIds?: number[]
 }
 
 // POST /api/admin/broadcast — 管理者が全ユーザー（または指定ユーザー）に通知を一斉送信する
-// Authorization: Bearer <ADMIN_SECRET> で認証する
+// admin_token Cookie で認証する（Bearer トークンではなく Cookie に統一）
 export const POST = async (request: NextRequest) => {
-  // 管理者シークレットで認証する
   const adminSecret = process.env.ADMIN_SECRET
   if (!adminSecret) {
     return NextResponse.json({ error: "ADMIN_SECRET が設定されていません" }, { status: 500 })
   }
 
-  const authHeader = request.headers.get("authorization")
-  const token = authHeader?.replace("Bearer ", "")
-  if (token !== adminSecret) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("admin_token")?.value
+  if (!token || !verifyAdminToken(token, adminSecret)) {
     return NextResponse.json({ error: "認証に失敗しました" }, { status: 401 })
   }
 
@@ -32,7 +32,6 @@ export const POST = async (request: NextRequest) => {
 
   const { title, body: messageBody, userIds } = body
 
-  // 送信対象ユーザーを取得する
   const users = await prisma.user.findMany({
     where: userIds ? { id: { in: userIds } } : undefined,
     select: { id: true },
@@ -42,7 +41,6 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({ error: "送信対象ユーザーが存在しません" }, { status: 404 })
   }
 
-  // 全対象ユーザーに通知レコードを一括作成する
   await prisma.notification.createMany({
     data: users.map((user: { id: number }) => ({
       userId: user.id,
@@ -52,8 +50,5 @@ export const POST = async (request: NextRequest) => {
     })),
   })
 
-  return NextResponse.json({
-    ok: true,
-    sent: users.length,
-  })
+  return NextResponse.json({ ok: true, sent: users.length })
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createAdminToken } from "@/lib/adminToken"
 
 const COOKIE_NAME = "admin_token"
 const COOKIE_MAX_AGE = 60 * 60 * 24 // 24時間
@@ -14,11 +15,15 @@ export const POST = async (request: NextRequest) => {
   }
 
   if (!secret || secret !== adminSecret) {
+    // ブルートフォース対策：失敗時に1秒の遅延を入れる
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     return NextResponse.json({ error: "パスワードが正しくありません" }, { status: 401 })
   }
 
+  // ADMIN_SECRET そのものではなく HMAC 署名済みトークンを Cookie に保存する
+  const token = createAdminToken(adminSecret)
   const response = NextResponse.json({ ok: true })
-  response.cookies.set(COOKIE_NAME, adminSecret, {
+  response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
