@@ -26,10 +26,10 @@ const ProfilePageClient = ({ initialProfile }: Props) => {
 
   return (
     <>
-      {/* 保存完了ダイアログ */}
+      {/* 保存完了ダイアログ：閉じたらフルリロードしてヘッダーのアバターも更新する */}
       <Dialog
         isOpen={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={() => { window.location.reload() }}
         variant="success"
         title="プロフィールを更新しました！"
         message="変更内容が保存されました。"
