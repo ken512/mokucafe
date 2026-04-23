@@ -2,6 +2,7 @@ import Link from "next/link"
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
+import { verifyAdminToken } from "@/lib/adminToken"
 import ButtonLink from "./ButtonLink"
 import UserMenu from "./UserMenu"
 import GuestMenu from "./GuestMenu"
@@ -18,7 +19,8 @@ const Header = async () => {
   // 管理者Cookieを確認する
   const cookieStore = await cookies()
   const adminToken = cookieStore.get("admin_token")?.value
-  const isAdmin = !!adminToken && adminToken === process.env.ADMIN_SECRET
+  const adminSecret = process.env.ADMIN_SECRET
+  const isAdmin = !!adminToken && !!adminSecret && verifyAdminToken(adminToken, adminSecret)
 
   // ログイン済みユーザーのプロフィール（アバター表示に使用）
   let userProfile: { name: string; avatarUrl: string | null } | null = null
