@@ -2,9 +2,7 @@
 
 import { useState } from "react"
 import { Post } from "../types"
-import ShareCard from "./ShareCard"
 
-type Orientation = "portrait" | "landscape"
 type Platform = "x" | "threads" | "instagram"
 
 type UserSns = {
@@ -50,7 +48,6 @@ const buildShareText = (post: Post, postUrl: string): string => {
 }
 
 const ShareModal = ({ post, userSns, onClose }: Props) => {
-  const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
@@ -103,30 +100,6 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         </div>
 
         <div className="p-5 flex flex-col gap-5">
-          {/* シェアカードプレビュー */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
-              {(["portrait", "landscape"] as Orientation[]).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setOrientation(o)}
-                  className={[
-                    "px-4 py-1.5 transition-colors",
-                    orientation === o ? "bg-stone-800 text-white" : "text-stone-600 hover:bg-stone-50",
-                  ].join(" ")}
-                >
-                  {o === "portrait" ? "縦" : "横"}
-                </button>
-              ))}
-            </div>
-            <div className="overflow-hidden flex justify-center">
-              <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
-                <ShareCard post={post} orientation={orientation} />
-              </div>
-            </div>
-          </div>
-
           {/* SNS シェアボタン */}
           {availablePlatforms.length > 0 ? (
             <div className="flex flex-col gap-3">
