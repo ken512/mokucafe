@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState } from "react"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
@@ -49,20 +49,13 @@ const buildShareText = (post: Post, postUrl: string): string => {
   ].join("\n")
 }
 
-const isMobile = (): boolean =>
-  typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-
-// SNS シェアモーダル
 const ShareModal = ({ post, userSns, onClose }: Props) => {
   const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
-  const [isSaving, setIsSaving] = useState(false)
-  const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isCopiedText, setIsCopiedText] = useState(false)
-  const cardRef = useRef<HTMLDivElement>(null)
 
   const availablePlatforms: { key: Platform; label: string; icon: string }[] = [
     ...(userSns.xUrl ? [{ key: "x" as Platform, label: "X", icon: "𝕏" }] : []),
@@ -70,41 +63,6 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // html2canvas でキャプチャして data URL を返す（ボタン押下時のみ実行）
-  const captureToDataUrl = useCallback(async (): Promise<string | null> => {
-    if (!cardRef.current) return null
-    const { default: html2canvas } = await import("html2canvas")
-    const canvas = await html2canvas(cardRef.current, {
-      scale: 1,
-      useCORS: true,
-      backgroundColor: null,
-    })
-    return canvas.toDataURL("image/png")
-  }, [])
-
-  // 画像を保存する
-  // iOS: data URL を新規タブで開く（長押し保存）
-  // Android / PC: <a download> で直接ダウンロード
-  const handleSaveImage = async () => {
-    setIsSaving(true)
-    try {
-      const dataUrl = await captureToDataUrl()
-      if (!dataUrl) return
-      if (isMobile() && /iPhone|iPad/i.test(navigator.userAgent)) {
-        // iOS は <a download> が効かないため新規タブで開いて長押し保存を促す
-        window.open(dataUrl, "_blank")
-      } else {
-        const a = document.createElement("a")
-        a.href = dataUrl
-        a.download = `mokucafe-${post.id}.png`
-        a.click()
-      }
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  // X / Threads / Instagram へシェア
   const handleShare = async (platform: Platform) => {
     const postUrl = `${window.location.origin}/posts/${post.id}`
     const text = buildShareText(post, postUrl)
@@ -114,21 +72,6 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     } else if (platform === "threads") {
       window.open(`https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`, "_blank")
     } else if (platform === "instagram") {
-      setIsCapturing(true)
-      try {
-        const dataUrl = await captureToDataUrl()
-        if (dataUrl) {
-          const res = await fetch(dataUrl)
-          const blob = await res.blob()
-          const file = new File([blob], "mokucafe.png", { type: "image/png" })
-          if (navigator.canShare?.({ files: [file] })) {
-            await navigator.share({ files: [file], text })
-            return
-          }
-        }
-      } finally {
-        setIsCapturing(false)
-      }
       await navigator.clipboard.writeText(text)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
@@ -154,14 +97,13 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ヘッダー */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-stone-100">
           <p className="text-base font-bold text-stone-800">SNSでシェア</p>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none" aria-label="閉じる">✕</button>
         </div>
 
         <div className="p-5 flex flex-col gap-5">
-          {/* シェアカード + 縦横トグル */}
+          {/* シェアカードプレビュー */}
           <div className="flex flex-col items-center gap-3">
             <div className="flex rounded-full border border-stone-200 overflow-hidden text-xs">
               {(["portrait", "landscape"] as Orientation[]).map((o) => (
@@ -178,25 +120,14 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                 </button>
               ))}
             </div>
-
-            {/* プレビュー（React コンポーネントをそのまま表示・html2canvas キャプチャ元も兼ねる） */}
             <div className="overflow-hidden flex justify-center">
               <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
-                <ShareCard ref={cardRef} post={post} orientation={orientation} />
+                <ShareCard post={post} orientation={orientation} />
               </div>
             </div>
-
-            {/* 画像保存ボタン */}
-            <button
-              onClick={handleSaveImage}
-              disabled={isSaving}
-              className="text-xs text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-1.5 rounded-full transition-colors disabled:opacity-50"
-            >
-              {isSaving ? "生成中..." : "💾 画像を保存する"}
-            </button>
           </div>
 
-          {/* プラットフォームタブ + シェアボタン */}
+          {/* SNS シェアボタン */}
           {availablePlatforms.length > 0 ? (
             <div className="flex flex-col gap-3">
               <div className="flex gap-1.5 bg-stone-100 p-1 rounded-xl">
@@ -214,17 +145,13 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                   </button>
                 ))}
               </div>
-
               <button
                 onClick={() => handleShare(activePlatform)}
-                disabled={isCapturing}
-                className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors"
               >
-                {isCapturing ? "準備中..." : (
-                  activePlatform === "x" ? "𝕏 でポストする" :
-                  activePlatform === "threads" ? "🧵 Threads に投稿する" :
-                  "📸 Instagram にシェアする"
-                )}
+                {activePlatform === "x" ? "𝕏 でポストする" :
+                 activePlatform === "threads" ? "🧵 Threads に投稿する" :
+                 isCopied ? "✅ テキストをコピーしました" : "📸 Instagram 用テキストをコピー"}
               </button>
             </div>
           ) : (
@@ -234,7 +161,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
             </div>
           )}
 
-          {/* シェア文プレビュー＋コピー */}
+          {/* コピペ用シェア文 */}
           <div className="flex flex-col gap-2">
             <p className="text-xs font-medium text-stone-500">📋 コピペ用シェア文</p>
             <div className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-xs text-stone-700 leading-relaxed whitespace-pre-line select-all">

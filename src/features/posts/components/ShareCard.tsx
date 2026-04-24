@@ -1,4 +1,3 @@
-import { forwardRef } from "react"
 import { Post } from "../types"
 
 type Props = {
@@ -6,9 +5,7 @@ type Props = {
   orientation: "portrait" | "landscape"
 }
 
-// html2canvas でキャプチャするシェアカード
-// 外部フォント・外部画像は CORS 問題を避けるため使用しない
-const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref) => {
+const ShareCard = ({ post, orientation }: Props) => {
   const isPortrait = orientation === "portrait"
 
   // 日時フォーマット（JST固定）
@@ -28,7 +25,6 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
 
   return (
     <div
-      ref={ref}
       style={{
         width: isPortrait ? 360 : 540,
         height: isPortrait ? 480 : 300,
@@ -150,5 +146,4 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ post, orientation }, ref)
   )
 })
 
-ShareCard.displayName = "ShareCard"
 export default ShareCard
