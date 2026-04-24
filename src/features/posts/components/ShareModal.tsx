@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback } from "react"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
@@ -29,7 +29,6 @@ const formatJST = (iso: string): string =>
     minute: "2-digit",
   }).format(new Date(iso))
 
-// 投稿情報からシェアテキストを生成する
 const buildShareText = (post: Post, postUrl: string): string => {
   const tags = post.tags.map((t) => `#${t}`).join(" ")
   const date = formatJST(post.date)
@@ -53,81 +52,82 @@ const buildShareText = (post: Post, postUrl: string): string => {
 const isMobile = (): boolean =>
   typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
 
-// SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
+// SNS シェアモーダル
 const ShareModal = ({ post, userSns, onClose }: Props) => {
   const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
-  // キャプチャ済み画像の data URL（<img> として表示するため）
-  const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isCopiedText, setIsCopiedText] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
-  // 利用可能なプラットフォーム（SNS URL が設定済みのもの）
   const availablePlatforms: { key: Platform; label: string; icon: string }[] = [
     ...(userSns.xUrl ? [{ key: "x" as Platform, label: "X", icon: "𝕏" }] : []),
     ...(userSns.threadsUrl ? [{ key: "threads" as Platform, label: "Threads", icon: "🧵" }] : []),
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // ShareCard を html2canvas でキャプチャして data URL を返す
+  // html2canvas でキャプチャして data URL を返す（ボタン押下時のみ実行）
   const captureToDataUrl = useCallback(async (): Promise<string | null> => {
     if (!cardRef.current) return null
-    setIsCapturing(true)
-    setCapturedDataUrl(null)
-    try {
-      const { default: html2canvas } = await import("html2canvas")
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: null,
-      })
-      return canvas.toDataURL("image/png")
-    } catch {
-      return null
-    } finally {
-      setIsCapturing(false)
-    }
+    const { default: html2canvas } = await import("html2canvas")
+    const canvas = await html2canvas(cardRef.current, {
+      scale: 1,
+      useCORS: true,
+      backgroundColor: null,
+    })
+    return canvas.toDataURL("image/png")
   }, [])
 
-  // モーダルを開いた時・向きを変えた時に自動キャプチャする
-  useEffect(() => {
-    // ShareCard が DOM に描画されるのを待つ
-    const timer = setTimeout(async () => {
+  // 画像を保存する
+  // iOS: data URL を新規タブで開く（長押し保存）
+  // Android / PC: <a download> で直接ダウンロード
+  const handleSaveImage = async () => {
+    setIsSaving(true)
+    try {
       const dataUrl = await captureToDataUrl()
-      if (dataUrl) setCapturedDataUrl(dataUrl)
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [orientation, captureToDataUrl])
+      if (!dataUrl) return
+      if (isMobile() && /iPhone|iPad/i.test(navigator.userAgent)) {
+        // iOS は <a download> が効かないため新規タブで開いて長押し保存を促す
+        window.open(dataUrl, "_blank")
+      } else {
+        const a = document.createElement("a")
+        a.href = dataUrl
+        a.download = `mokucafe-${post.id}.png`
+        a.click()
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
-  // X / Threads へシェア（インテント URL を開く）
+  // X / Threads / Instagram へシェア
   const handleShare = async (platform: Platform) => {
     const postUrl = `${window.location.origin}/posts/${post.id}`
     const text = buildShareText(post, postUrl)
 
     if (platform === "x") {
-      window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
-        "_blank"
-      )
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank")
     } else if (platform === "threads") {
-      window.open(
-        `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`,
-        "_blank"
-      )
+      window.open(`https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`, "_blank")
     } else if (platform === "instagram") {
-      // data URL を Blob に変換してシェアする
-      if (capturedDataUrl) {
-        const res = await fetch(capturedDataUrl)
-        const blob = await res.blob()
-        const file = new File([blob], "mokucafe.png", { type: "image/png" })
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text })
-          return
+      setIsCapturing(true)
+      try {
+        const dataUrl = await captureToDataUrl()
+        if (dataUrl) {
+          const res = await fetch(dataUrl)
+          const blob = await res.blob()
+          const file = new File([blob], "mokucafe.png", { type: "image/png" })
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text })
+            return
+          }
         }
+      } finally {
+        setIsCapturing(false)
       }
       await navigator.clipboard.writeText(text)
       setIsCopied(true)
@@ -135,22 +135,18 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     }
   }
 
-  // URLをコピーする
   const handleCopyUrl = async () => {
     await navigator.clipboard.writeText(`${window.location.origin}/posts/${post.id}`)
     setIsCopied(true)
     setTimeout(() => setIsCopied(false), 2000)
   }
 
-  // シェア文をコピーする
   const handleCopyText = async () => {
     const postUrl = `${window.location.origin}/posts/${post.id}`
     await navigator.clipboard.writeText(buildShareText(post, postUrl))
     setIsCopiedText(true)
     setTimeout(() => setIsCopiedText(false), 2000)
   }
-
-  const saveHint = isMobile() ? "長押しで画像を保存できます" : "右クリックで画像を保存できます"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
@@ -161,13 +157,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         {/* ヘッダー */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-stone-100">
           <p className="text-base font-bold text-stone-800">SNSでシェア</p>
-          <button
-            onClick={onClose}
-            className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none" aria-label="閉じる">✕</button>
         </div>
 
         <div className="p-5 flex flex-col gap-5">
@@ -181,9 +171,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                   onClick={() => setOrientation(o)}
                   className={[
                     "px-4 py-1.5 transition-colors",
-                    orientation === o
-                      ? "bg-stone-800 text-white"
-                      : "text-stone-600 hover:bg-stone-50",
+                    orientation === o ? "bg-stone-800 text-white" : "text-stone-600 hover:bg-stone-50",
                   ].join(" ")}
                 >
                   {o === "portrait" ? "縦" : "横"}
@@ -191,34 +179,21 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
               ))}
             </div>
 
-            {/* キャプチャ元：画面外に配置（html2canvas 用） */}
-            <div style={{ position: "absolute", left: -9999, top: 0, pointerEvents: "none" }} aria-hidden>
-              <ShareCard ref={cardRef} post={post} orientation={orientation} />
+            {/* プレビュー（React コンポーネントをそのまま表示・html2canvas キャプチャ元も兼ねる） */}
+            <div className="overflow-hidden flex justify-center">
+              <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
+                <ShareCard ref={cardRef} post={post} orientation={orientation} />
+              </div>
             </div>
 
-            {/* 表示用：<img> として描画することで長押し・右クリック保存が可能になる */}
-            <div className="flex justify-center">
-              {isCapturing || !capturedDataUrl ? (
-                <div
-                  className="bg-stone-100 rounded-2xl flex items-center justify-center text-stone-400 text-sm"
-                  style={{
-                    width: orientation === "portrait" ? 270 : 405,
-                    height: orientation === "portrait" ? 360 : 225,
-                  }}
-                >
-                  画像を生成中...
-                </div>
-              ) : (
-                <img
-                  src={capturedDataUrl}
-                  alt="シェアカード"
-                  className="rounded-2xl shadow-sm"
-                  style={{ width: orientation === "portrait" ? 270 : 405 }}
-                  draggable
-                />
-              )}
-            </div>
-            <p className="text-xs text-stone-400">{saveHint}</p>
+            {/* 画像保存ボタン */}
+            <button
+              onClick={handleSaveImage}
+              disabled={isSaving}
+              className="text-xs text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-1.5 rounded-full transition-colors disabled:opacity-50"
+            >
+              {isSaving ? "生成中..." : "💾 画像を保存する"}
+            </button>
           </div>
 
           {/* プラットフォームタブ + シェアボタン */}
@@ -231,9 +206,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
                     onClick={() => setActivePlatform(key)}
                     className={[
                       "flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-sm font-medium transition-colors",
-                      activePlatform === key
-                        ? "bg-white text-stone-800 shadow-sm"
-                        : "text-stone-500 hover:text-stone-700",
+                      activePlatform === key ? "bg-white text-stone-800 shadow-sm" : "text-stone-500 hover:text-stone-700",
                     ].join(" ")}
                   >
                     <span>{icon}</span>
@@ -244,7 +217,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
 
               <button
                 onClick={() => handleShare(activePlatform)}
-                disabled={isCapturing || !capturedDataUrl}
+                disabled={isCapturing}
                 className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
               >
                 {isCapturing ? "準備中..." : (
@@ -256,12 +229,8 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
             </div>
           ) : (
             <div className="text-center py-4 flex flex-col gap-2">
-              <p className="text-sm text-stone-600">
-                プロフィールにSNSリンクを登録すると<br />シェアボタンが表示されます
-              </p>
-              <a href="/profile" className="text-sm text-amber-900 underline underline-offset-2">
-                プロフィールを編集する →
-              </a>
+              <p className="text-sm text-stone-600">プロフィールにSNSリンクを登録すると<br />シェアボタンが表示されます</p>
+              <a href="/profile" className="text-sm text-amber-900 underline underline-offset-2">プロフィールを編集する →</a>
             </div>
           )}
 
