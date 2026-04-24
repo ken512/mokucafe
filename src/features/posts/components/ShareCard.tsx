@@ -144,6 +144,6 @@ const ShareCard = ({ post, orientation }: Props) => {
       </div>
     </div>
   )
-})
+}
 
 export default ShareCard
