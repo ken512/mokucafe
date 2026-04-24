@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import ProfileView from "./ProfileView"
 import ProfileEditForm from "./ProfileEditForm"
 import Dialog from "@/components/ui/Dialog"
@@ -17,6 +18,7 @@ const ProfilePageClient = ({ initialProfile }: Props) => {
   const [profile, setProfile] = useState<Profile>(initialProfile)
   const [mode, setMode] = useState<Mode>("view")
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const router = useRouter()
 
   const handleSave = (updated: Profile) => {
     setProfile(updated)
@@ -24,12 +26,18 @@ const ProfilePageClient = ({ initialProfile }: Props) => {
     setShowSuccessDialog(true)
   }
 
+  const handleDialogClose = () => {
+    setShowSuccessDialog(false)
+    // サーバーコンポーネント（ヘッダーのアバター）を再取得する
+    router.refresh()
+  }
+
   return (
     <>
-      {/* 保存完了ダイアログ：閉じたらフルリロードしてヘッダーのアバターも更新する */}
+      {/* 保存完了ダイアログ：閉じたら router.refresh() でヘッダーのアバターも更新する */}
       <Dialog
         isOpen={showSuccessDialog}
-        onClose={() => { window.location.reload() }}
+        onClose={handleDialogClose}
         variant="success"
         title="プロフィールを更新しました！"
         message="変更内容が保存されました。"
