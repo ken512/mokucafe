@@ -19,10 +19,33 @@ type Props = {
   onClose: () => void
 }
 
+const formatJST = (iso: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso))
+
 // 投稿情報からシェアテキストを生成する
 const buildShareText = (post: Post, postUrl: string): string => {
   const tags = post.tags.map((t) => `#${t}`).join(" ")
-  return `☕ もくカフェで作業仲間を募集中！\n\n📍 ${post.cafeName}\n📅 ${post.date}\n\n${tags}\n\n${postUrl}`
+  const date = formatJST(post.date)
+  const end = post.endDate ? `〜${formatJST(post.endDate)}` : ""
+  const remaining = Math.max(0, post.capacity - post.applicantCount)
+  return [
+    `☕ もくカフェで作業仲間を募集中！`,
+    ``,
+    `📍 ${post.cafeName}`,
+    `📅 ${date}${end}`,
+    `👥 残り${remaining}枠 / ${post.capacity}人`,
+    ...(tags ? [tags] : []),
+    ``,
+    `詳細・参加申請はこちら👇`,
+    postUrl,
+  ].join("\n")
 }
 
 // SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
@@ -33,6 +56,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
   )
   const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [isCopiedText, setIsCopiedText] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   // 利用可能なプラットフォーム（SNS URL が設定済みのもの）
@@ -96,6 +120,14 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     await navigator.clipboard.writeText(`${window.location.origin}/posts/${post.id}`)
     setIsCopied(true)
     setTimeout(() => setIsCopied(false), 2000)
+  }
+
+  // シェア文をコピーする
+  const handleCopyText = async () => {
+    const postUrl = `${window.location.origin}/posts/${post.id}`
+    await navigator.clipboard.writeText(buildShareText(post, postUrl))
+    setIsCopiedText(true)
+    setTimeout(() => setIsCopiedText(false), 2000)
   }
 
   return (
@@ -188,6 +220,20 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
               </a>
             </div>
           )}
+
+          {/* シェア文プレビュー＋コピー */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-stone-500">📋 コピペ用シェア文</p>
+            <div className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-xs text-stone-700 leading-relaxed whitespace-pre-line select-all">
+              {buildShareText(post, `${typeof window !== "undefined" ? window.location.origin : ""}/posts/${post.id}`)}
+            </div>
+            <button
+              onClick={handleCopyText}
+              className="w-full py-2.5 rounded-xl border border-stone-200 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+            >
+              {isCopiedText ? "✅ コピーしました" : "📋 シェア文をコピー"}
+            </button>
+          </div>
 
           {/* URLコピー */}
           <button
