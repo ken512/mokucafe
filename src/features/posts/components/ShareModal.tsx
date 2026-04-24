@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Post } from "../types"
 import ShareCard from "./ShareCard"
 
@@ -50,12 +50,17 @@ const buildShareText = (post: Post, postUrl: string): string => {
   ].join("\n")
 }
 
+const isMobile = (): boolean =>
+  typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+
 // SNS シェアモーダル（シェアカード画像 + プラットフォーム別投稿）
 const ShareModal = ({ post, userSns, onClose }: Props) => {
   const [orientation, setOrientation] = useState<Orientation>("portrait")
   const [activePlatform, setActivePlatform] = useState<Platform>(
     userSns.xUrl ? "x" : userSns.threadsUrl ? "threads" : "instagram"
   )
+  // キャプチャ済み画像の data URL（<img> として表示するため）
+  const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isCopiedText, setIsCopiedText] = useState(false)
@@ -68,10 +73,11 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     ...(userSns.instagramUrl ? [{ key: "instagram" as Platform, label: "Instagram", icon: "📸" }] : []),
   ]
 
-  // シェアカードを画像として取得し Blob を返す
-  const captureCard = useCallback(async (): Promise<Blob | null> => {
+  // ShareCard を html2canvas でキャプチャして data URL を返す
+  const captureToDataUrl = useCallback(async (): Promise<string | null> => {
     if (!cardRef.current) return null
     setIsCapturing(true)
+    setCapturedDataUrl(null)
     try {
       const { default: html2canvas } = await import("html2canvas")
       const canvas = await html2canvas(cardRef.current, {
@@ -79,13 +85,23 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         useCORS: true,
         backgroundColor: null,
       })
-      return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
+      return canvas.toDataURL("image/png")
     } catch {
       return null
     } finally {
       setIsCapturing(false)
     }
   }, [])
+
+  // モーダルを開いた時・向きを変えた時に自動キャプチャする
+  useEffect(() => {
+    // ShareCard が DOM に描画されるのを待つ
+    const timer = setTimeout(async () => {
+      const dataUrl = await captureToDataUrl()
+      if (dataUrl) setCapturedDataUrl(dataUrl)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [orientation, captureToDataUrl])
 
   // X / Threads へシェア（インテント URL を開く）
   const handleShare = async (platform: Platform) => {
@@ -103,17 +119,19 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
         "_blank"
       )
     } else if (platform === "instagram") {
-      const blob = await captureCard()
-      if (blob && navigator.canShare?.({ files: [new File([blob], "mokucafe.png", { type: "image/png" })] })) {
-        await navigator.share({
-          files: [new File([blob], "mokucafe.png", { type: "image/png" })],
-          text,
-        })
-      } else {
-        await navigator.clipboard.writeText(text)
-        setIsCopied(true)
-        setTimeout(() => setIsCopied(false), 2000)
+      // data URL を Blob に変換してシェアする
+      if (capturedDataUrl) {
+        const res = await fetch(capturedDataUrl)
+        const blob = await res.blob()
+        const file = new File([blob], "mokucafe.png", { type: "image/png" })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], text })
+          return
+        }
       }
+      await navigator.clipboard.writeText(text)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
     }
   }
 
@@ -131,6 +149,8 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
     setIsCopiedText(true)
     setTimeout(() => setIsCopiedText(false), 2000)
   }
+
+  const saveHint = isMobile() ? "長押しで画像を保存できます" : "右クリックで画像を保存できます"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
@@ -171,12 +191,34 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
               ))}
             </div>
 
-            <div className="overflow-hidden flex justify-center">
-              <div style={{ transform: "scale(0.75)", transformOrigin: "top center" }}>
-                <ShareCard ref={cardRef} post={post} orientation={orientation} />
-              </div>
+            {/* キャプチャ元：画面外に配置（html2canvas 用） */}
+            <div style={{ position: "absolute", left: -9999, top: 0, pointerEvents: "none" }} aria-hidden>
+              <ShareCard ref={cardRef} post={post} orientation={orientation} />
             </div>
-            <p className="text-xs text-stone-400">画像を長押しして保存できます</p>
+
+            {/* 表示用：<img> として描画することで長押し・右クリック保存が可能になる */}
+            <div className="flex justify-center">
+              {isCapturing || !capturedDataUrl ? (
+                <div
+                  className="bg-stone-100 rounded-2xl flex items-center justify-center text-stone-400 text-sm"
+                  style={{
+                    width: orientation === "portrait" ? 270 : 405,
+                    height: orientation === "portrait" ? 360 : 225,
+                  }}
+                >
+                  画像を生成中...
+                </div>
+              ) : (
+                <img
+                  src={capturedDataUrl}
+                  alt="シェアカード"
+                  className="rounded-2xl shadow-sm"
+                  style={{ width: orientation === "portrait" ? 270 : 405 }}
+                  draggable
+                />
+              )}
+            </div>
+            <p className="text-xs text-stone-400">{saveHint}</p>
           </div>
 
           {/* プラットフォームタブ + シェアボタン */}
@@ -202,7 +244,7 @@ const ShareModal = ({ post, userSns, onClose }: Props) => {
 
               <button
                 onClick={() => handleShare(activePlatform)}
-                disabled={isCapturing}
+                disabled={isCapturing || !capturedDataUrl}
                 className="w-full py-3 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-sm font-bold transition-colors disabled:opacity-50"
               >
                 {isCapturing ? "準備中..." : (
