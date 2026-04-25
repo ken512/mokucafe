@@ -36,5 +36,29 @@ export const useLogin = (redirectTo = "/") => {
     }
   }
 
-  return { login, isLoading, error, dialog, isOpen, closeDialog }
+  const signInWithGoogle = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (authError) {
+        setError("Google でのログインに失敗しました")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { login, signInWithGoogle, isLoading, error, dialog, isOpen, closeDialog }
 }

@@ -12,7 +12,7 @@ import Dialog from "@/components/ui/Dialog"
 type Props = { redirectTo?: string }
 
 const LoginForm = ({ redirectTo }: Props) => {
-  const { login, isLoading, error, dialog, isOpen, closeDialog } = useLogin(redirectTo)
+  const { login, signInWithGoogle, isLoading, error, dialog, isOpen, closeDialog } = useLogin(redirectTo)
   const {
     register,
     handleSubmit,
@@ -21,6 +21,24 @@ const LoginForm = ({ redirectTo }: Props) => {
 
   return (
     <>
+      {/* Google ログイン */}
+      <button
+        type="button"
+        onClick={signInWithGoogle}
+        disabled={isLoading}
+        className="w-full py-3 rounded-xl border border-stone-200 text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        <span>🔗</span>
+        <span>Google でログイン</span>
+      </button>
+
+      {/* 区切り線 */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-stone-200" />
+        <span className="text-xs text-stone-400 font-medium">または</span>
+        <div className="flex-1 h-px bg-stone-200" />
+      </div>
+
       <form onSubmit={handleSubmit(login)} className="flex flex-col gap-5">
         {error && <ErrorAlert message={error} />}
 

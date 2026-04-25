@@ -1,6 +1,5 @@
 import Link from "next/link"
 import LoginForm from "@/features/auth/components/LoginForm"
-import GuestLoginButton from "@/features/auth/components/GuestLoginButton"
 
 type Props = { searchParams: Promise<{ confirmed?: string }> }
 
@@ -41,7 +40,6 @@ const LoginPage = async ({ searchParams }: Props) => {
           </div>
 
           <LoginForm redirectTo={isConfirmed ? "/?new_user=1" : "/"} />
-          <GuestLoginButton />
         </div>
       </main>
     </div>
