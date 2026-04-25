@@ -1,6 +1,5 @@
 import Image from "next/image"
 import ButtonLink from "@/components/ui/ButtonLink"
-import GuestLoginButton from "@/features/auth/components/GuestLoginButton"
 import PostList from "@/features/posts/components/PostList"
 
 const HOW_IT_WORKS = [
@@ -58,7 +57,6 @@ const Home = () => {
               <ButtonLink href="/posts/new" variant="hero" size="lg" className="self-start font-semibold">
                 募集を投稿する
               </ButtonLink>
-              <GuestLoginButton variant="hero" />
             </div>
           </div>
         </section>

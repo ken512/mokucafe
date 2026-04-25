@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma"
 export const GET = async (request: NextRequest) => {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
+  const redirect = searchParams.get("redirect")
 
   if (!code) {
     return NextResponse.redirect(`${origin}/?error=missing_code`)
@@ -67,6 +68,9 @@ export const GET = async (request: NextRequest) => {
   } else if (isMobile) {
     // 既存ユーザーがモバイルで再確認した場合もログインページへ
     response.headers.set("Location", `${origin}/login?confirmed=1`)
+  } else if (redirect) {
+    // OAuth ログインで redirect が指定されている場合はそこへ
+    response.headers.set("Location", redirect)
   }
 
 

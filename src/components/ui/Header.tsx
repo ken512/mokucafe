@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma"
 import { verifyAdminToken } from "@/lib/adminToken"
 import ButtonLink from "./ButtonLink"
 import UserMenu from "./UserMenu"
-import GuestMenu from "./GuestMenu"
 import NotificationBell from "./NotificationBell"
 
 // ヘッダー（認証状態に応じてUIを切り替えるサーバーコンポーネント）
@@ -13,8 +12,7 @@ const Header = async () => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isGuest = user?.is_anonymous === true
-  const isLoggedIn = !!user && !isGuest
+  const isLoggedIn = !!user
 
   // 管理者Cookieを確認する
   const cookieStore = await cookies()
@@ -65,9 +63,6 @@ const Header = async () => {
               <ButtonLink href="/login" variant="primary" size="sm">ログイン</ButtonLink>
             </>
           )}
-
-          {/* ゲストユーザー */}
-          {isGuest && <GuestMenu />}
 
           {/* ログイン済みユーザー：通知ベル＋アバタードロップダウン */}
           {isLoggedIn && userProfile && (
