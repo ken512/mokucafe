@@ -78,5 +78,29 @@ export const useSignup = () => {
     }
   }
 
-  return { signup, isLoading, error, dialog, isOpen, closeDialog }
+  const signUpWithGoogle = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (authError) {
+        setError("Google でのサインアップに失敗しました")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { signup, signUpWithGoogle, isLoading, error, dialog, isOpen, closeDialog }
 }
