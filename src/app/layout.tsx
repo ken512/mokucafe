@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/ui/Header"
-import PushSubscriptionManager from "@/components/ui/PushSubscriptionManager"
-import PwaOnboardingModal from "@/components/ui/PwaOnboardingModal"
+import { ClientProviders } from "./ClientProviders"
 import { getUser } from "@/lib/supabase/getUser"
 
 const geistSans = Geist({
@@ -49,10 +48,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-stone-100">
         <Header />
         <main className="flex-1">{children}</main>
-        {/* ログイン済みの場合のみ SW 登録・Push 購読を行う */}
-        {isLoggedIn && <PushSubscriptionManager />}
-        {/* 新規登録後の初回: PWA ホーム画面追加を案内するモーダル */}
-        {isLoggedIn && <PwaOnboardingModal />}
+        <ClientProviders isLoggedIn={isLoggedIn} />
       </body>
     </html>
   )
