@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
-type Platform = "ios-browser" | "android" | "other"
+type Platform = "ios-browser" | "android" | "web"
 
 // プラットフォームを判定する
 const detectPlatform = (): Platform => {
@@ -12,7 +12,7 @@ const detectPlatform = (): Platform => {
   const isAndroid = /android/i.test(ua)
   if (isIOS) return "ios-browser"
   if (isAndroid) return "android"
-  return "other"
+  return "web"
 }
 
 // ホーム画面から起動中（standalone）かどうか
@@ -28,9 +28,9 @@ const getInitialPlatform = (): Platform | null => {
   if (localStorage.getItem(DISMISSED_KEY)) return null
 
   const p = detectPlatform()
-  if (p === "other") return null
   if (p === "ios-browser" && isStandalone()) return null
   if (p === "android" && "Notification" in window && Notification.permission === "granted") return null
+  if (p === "web" && "Notification" in window && Notification.permission === "granted") return null
 
   return p
 }
@@ -44,6 +44,47 @@ const NotificationSetupBanner = () => {
   const dismiss = () => {
     localStorage.setItem(DISMISSED_KEY, "1")
     setPlatform(null)
+  }
+
+  // Web（PC/モバイルブラウザ）: 通知許可ボタンを押す
+  const requestWebNotification = async () => {
+    if (!("Notification" in window)) return
+    const permission = await Notification.requestPermission()
+    if (permission === "granted") {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js")
+        await navigator.serviceWorker.ready
+        const existing = await registration.pushManager.getSubscription()
+        if (!existing) {
+          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          if (vapidKey) {
+            const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4)
+            const b64 = (vapidKey + padding).replace(/-/g, "+").replace(/_/g, "/")
+            const raw = atob(b64)
+            const key = Uint8Array.from([...raw].map((c) => c.charCodeAt(0)))
+            const sub = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: key as unknown as ArrayBuffer,
+            })
+            const supabase = createClient()
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+              await fetch("/api/push/subscribe", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify(sub),
+              })
+            }
+          }
+        }
+      } catch (e: unknown) {
+        console.error("通知設定エラー:", e)
+      }
+      dismiss()
+    }
   }
 
   // Android: 通知許可ボタンを押す
@@ -155,6 +196,29 @@ const NotificationSetupBanner = () => {
           <div className="flex gap-2">
             <button
               onClick={requestAndroidNotification}
+              className="flex-1 py-2 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-xs font-bold transition-colors"
+            >
+              通知を許可する
+            </button>
+            <button
+              onClick={dismiss}
+              className="flex-1 py-2 rounded-xl border border-stone-200 text-xs text-stone-600 hover:bg-stone-50 transition-colors"
+            >
+              今はしない
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Web（PC/モバイルブラウザ）向け：通知許可ボタン */}
+      {platform === "web" && (
+        <>
+          <p className="text-xs text-stone-700 leading-relaxed">
+            参加申請・承認・却下などをブラウザ通知でお知らせします。
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={requestWebNotification}
               className="flex-1 py-2 rounded-xl bg-amber-900 hover:bg-amber-800 text-white text-xs font-bold transition-colors"
             >
               通知を許可する

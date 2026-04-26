@@ -1,6 +1,9 @@
+"use client"
+
 import Image from "next/image"
 import ButtonLink from "@/components/ui/ButtonLink"
 import PostList from "@/features/posts/components/PostList"
+import NotificationSetupBanner from "@/components/ui/NotificationSetupBanner"
 
 const HOW_IT_WORKS = [
   { icon: "📍", label: "カフェで投稿" },
@@ -59,6 +62,11 @@ const Home = () => {
               </ButtonLink>
             </div>
           </div>
+        </section>
+
+        {/* 通知設定バナー */}
+        <section className="max-w-2xl mx-auto w-full px-4 pt-6">
+          <NotificationSetupBanner />
         </section>
 
         {/* 募集一覧セクション */}
