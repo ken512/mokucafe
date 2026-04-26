@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -38,7 +39,8 @@ const NotificationBell = () => {
     return session
   }
 
-  const fetchNotifications = useCallback(async () => {
+  // fetchNotifications は useCallback ではなく、useEffect 内で定義する
+  const fetchNotifications = async () => {
     const session = await getSession()
     if (!session) return
     const res = await fetch("/api/notifications", {
@@ -48,7 +50,7 @@ const NotificationBell = () => {
       const data = await res.json()
       setNotifications(data.notifications)
     }
-  }, [])
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -56,13 +58,17 @@ const NotificationBell = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) fetchNotifications()
     })
-    fetchNotifications()
     const timer = setInterval(fetchNotifications, 30_000)
     return () => {
       subscription.unsubscribe()
       clearInterval(timer)
     }
   }, [fetchNotifications])
+
+  // 初回マウント時に通知を取得
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
 
   // PwaOnboardingModal などから通知作成後に即時更新する
   useEffect(() => {
