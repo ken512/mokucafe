@@ -38,7 +38,7 @@ const MediaGallery = ({ mediaUrls }: Props) => {
       {/* メイン表示エリア */}
       <div className="relative aspect-video bg-black">
         {/* 枚数カウンター */}
-        <div className="absolute bottom-3 right-3 z-10 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full">
+        <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
           {currentIndex + 1} / {mediaUrls.length}
         </div>
 
