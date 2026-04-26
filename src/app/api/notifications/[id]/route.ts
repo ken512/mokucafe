@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 
 type Params = { params: Promise<{ id: string }> }
 
-// DELETE /api/notifications/[id] — 自分の通知を1件削除する
+// DELETE /api/notifications/[id] — 通知を削除する
 export const DELETE = async (request: NextRequest, { params }: Params) => {
   const auth = await authenticateRequest(request)
   if (!auth.success) {
@@ -19,14 +19,25 @@ export const DELETE = async (request: NextRequest, { params }: Params) => {
     return NextResponse.json({ error: "不正なIDです" }, { status: 400 })
   }
 
-  // 自分の通知のみ削除可（他人の通知を削除できないよう userId で絞る）
-  const deleted = await prisma.notification.deleteMany({
-    where: { id: notificationId, userId: auth.userId },
+  // 通知の存在確認 + 所有者確認
+  const notification = await prisma.notification.findUnique({
+    where: { id: notificationId },
+    select: { userId: true },
   })
 
-  if (deleted.count === 0) {
+  if (!notification) {
     return NextResponse.json({ error: "通知が見つかりません" }, { status: 404 })
   }
+
+  // 本人の通知のみ削除可能
+  if (notification.userId !== auth.userId) {
+    return NextResponse.json({ error: "権限がありません" }, { status: 403 })
+  }
+
+  // 削除
+  await prisma.notification.delete({
+    where: { id: notificationId },
+  })
 
   return NextResponse.json({ ok: true })
 }
