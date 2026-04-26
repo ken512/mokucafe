@@ -25,20 +25,28 @@ const DISMISSED_KEY = "notification_banner_dismissed"
 // バナーを表示すべきプラットフォームを判定する（クライアント初回レンダリング時のみ呼ばれる）
 const getInitialPlatform = (): Platform | null => {
   if (typeof window === "undefined") return null
-  if (localStorage.getItem(DISMISSED_KEY)) return null
 
   const p = detectPlatform()
+
+  // iOS PWA（standalone）の場合は表示不要
   if (p === "ios-browser" && isStandalone()) return null
-  if (p === "android" && "Notification" in window && Notification.permission === "granted") return null
-  if (p === "web" && "Notification" in window && Notification.permission === "granted") return null
+
+  // 既に通知許可が与えられている場合は表示不要
+  const permission = "Notification" in window ? Notification.permission : "default"
+  if (permission === "granted") return null
+
+  // dismissed していても、未許可の場合は表示する（ユーザーが後から許可できるように）
+  if (localStorage.getItem(DISMISSED_KEY) && permission !== "default") return null
 
   return p
 }
 
 // 通知設定を促すバナー（ログイン済みユーザー向け）
 const NotificationSetupBanner = () => {
-  // lazy initializer でマウント時に一度だけ判定し、useEffect 内の setState を避ける
-  const [platform, setPlatform] = useState<Platform | null>(getInitialPlatform)
+  const [platform, setPlatform] = useState<Platform | null>(() => {
+    if (typeof window === "undefined") return null
+    return getInitialPlatform()
+  })
   const [showIosSteps, setShowIosSteps] = useState(false)
 
   const dismiss = () => {
