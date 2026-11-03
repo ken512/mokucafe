@@ -59,14 +59,16 @@ model Post {
 model Application {
   id        Int               @id @default(autoincrement())
   postId    Int
-  userId    Int
+  userId    Int?
+  guestName String?
+  guestTokenHash String? @unique
   message   String?           // 申請メッセージ（任意）
   status    ApplicationStatus @default(PENDING)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
   post      Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 同じユーザーが同じ募集に二重申請できないようにする
   @@unique([postId, userId])
