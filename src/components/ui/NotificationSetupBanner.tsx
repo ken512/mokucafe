@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 type Platform = "ios-browser" | "android" | "web"
@@ -22,8 +22,8 @@ const isStandalone = (): boolean =>
 
 const DISMISSED_KEY = "notification_banner_dismissed"
 
-// バナーを表示すべきプラットフォームを判定する（クライアント初回レンダリング時のみ呼ばれる）
-const getInitialPlatform = (): Platform | null => {
+// Hydration完了後にブラウザの通知設定を読み取る
+const getPlatformSnapshot = (): Platform | null => {
   if (typeof window === "undefined") return null
 
   const p = detectPlatform()
@@ -36,22 +36,32 @@ const getInitialPlatform = (): Platform | null => {
   if (permission === "granted") return null
 
   // dismissed していても、未許可の場合は表示する（ユーザーが後から許可できるように）
-  if (localStorage.getItem(DISMISSED_KEY) && permission !== "default") return null
+  try {
+    if (localStorage.getItem(DISMISSED_KEY) && permission !== "default") return null
+  } catch {
+    // ストレージが利用できない場合も通知設定を案内する
+  }
 
   return p
 }
 
+// SSRとHydrationの初回描画は共通の非表示状態にする
+const getServerPlatformSnapshot = (): null => null
+const subscribePlatform = () => () => {}
+
 // 通知設定を促すバナー（ログイン済みユーザー向け）
 const NotificationSetupBanner = () => {
-  const [platform, setPlatform] = useState<Platform | null>(() => {
-    if (typeof window === "undefined") return null
-    return getInitialPlatform()
-  })
+  const platform = useSyncExternalStore(subscribePlatform, getPlatformSnapshot, getServerPlatformSnapshot)
+  const [dismissed, setDismissed] = useState(false)
   const [showIosSteps, setShowIosSteps] = useState(false)
 
   const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, "1")
-    setPlatform(null)
+    try {
+      localStorage.setItem(DISMISSED_KEY, "1")
+    } catch {
+      // 保存できなくても現在の画面では閉じる
+    }
+    setDismissed(true)
   }
 
   // Web（PC/モバイルブラウザ）: 通知許可ボタンを押す
@@ -137,7 +147,7 @@ const NotificationSetupBanner = () => {
     }
   }
 
-  if (!platform) return null
+  if (dismissed || !platform) return null
 
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col gap-3">
