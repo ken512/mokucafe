@@ -39,6 +39,7 @@ export const PATCH = async (request: NextRequest, { params }: Params) => {
       id: true,
       status: true,
       userId: true,
+      guestName: true,
       user: { select: { name: true } },
       post: { select: { id: true, userId: true, cafeName: true } },
     },
@@ -75,9 +76,9 @@ export const PATCH = async (request: NextRequest, { params }: Params) => {
   // ステータスに応じた通知を送る（非同期・失敗しても無視）
   const cafeName = application.post.cafeName
   const postId = application.post.id
-  const applicantName = application.user.name
+  const applicantName = application.user?.name ?? application.guestName ?? "ゲスト"
 
-  if (status === "APPROVED") {
+  if (status === "APPROVED" && application.userId !== null) {
     notify({
       recipientUserId: application.userId,
       type: "APPLICATION_APPROVED",
@@ -85,7 +86,7 @@ export const PATCH = async (request: NextRequest, { params }: Params) => {
       body: `「${cafeName}」への参加申請が承認されました。参加確定を忘れずに！`,
       postId,
     }).catch(console.error)
-  } else if (status === "REJECTED") {
+  } else if (status === "REJECTED" && application.userId !== null) {
     notify({
       recipientUserId: application.userId,
       type: "APPLICATION_REJECTED",

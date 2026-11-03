@@ -31,8 +31,8 @@ const ApplicationCard = ({
     {/* ユーザー情報とステータス */}
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 min-w-0">
-        <Avatar name={app.user.name} avatarUrl={app.user.avatarUrl} size="sm" />
-        <p className="text-sm font-medium text-stone-800 truncate">{app.user.name}</p>
+        <Avatar name={app.user?.name ?? app.guestName ?? "ゲスト"} avatarUrl={app.user?.avatarUrl ?? null} size="sm" />
+        <p className="text-sm font-medium text-stone-800 truncate">{app.user?.name ?? app.guestName ?? "ゲスト"}</p>
       </div>
       <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 ${statusLabel[app.status].className}`}>
         <span>{statusLabel[app.status].icon}</span>

@@ -2,7 +2,7 @@
 
 import Tag from "@/components/ui/Tag"
 import Avatar from "@/components/ui/Avatar"
-import ButtonLink from "@/components/ui/ButtonLink"
+import GuestApplicationPage from "@/features/applications/components/GuestApplicationPage"
 import CafeMap from "./CafeMap"
 import ApplyButton from "./ApplyButton"
 import MediaGallery from "./MediaGallery"
@@ -109,12 +109,7 @@ const PostDetail = ({ post, isLoggedIn, isOwner }: Props) => {
             isWorkFinished={workStatus === "finished"}
           />
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <ButtonLink href="/login" variant="primary" size="lg" fullWidth>
-              ログインして参加申請する
-            </ButtonLink>
-            <p className="text-xs text-stone-500">参加申請にはログインが必要です</p>
-          </div>
+          <GuestApplicationPage postId={post.id} isClosed={post.status !== "OPEN" || remainingSlots === 0 || workStatus === "finished"} />
         )
       )}
 

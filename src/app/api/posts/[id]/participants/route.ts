@@ -23,11 +23,13 @@ export const GET = async (request: NextRequest, { params }: Params) => {
     where: { postId, status: { in: ["APPROVED", "ATTENDING"] } },
     orderBy: { updatedAt: "asc" },
     select: {
+      id: true,
+      guestName: true,
       user: { select: { id: true, name: true, avatarUrl: true } },
     },
   })
 
-  const participants = applications.map((a: { user: { id: number; name: string; avatarUrl: string | null } }) => a.user)
+  const participants = applications.map((a) => a.user ?? { id: -a.id, name: a.guestName ?? "ゲスト", avatarUrl: null })
 
   return NextResponse.json({ participants })
 }
